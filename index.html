@@ -44,7 +44,7 @@
             background-color: #374151; /* dark:bg-gray-700 */
         }
 
-        /* Estilos de Componentes (geralmente não precisam de muitas alterações de cor) */
+        /* Estilos de Componentes */
         .modal-overlay, .loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             display: flex; align-items: center; justify-content: center;
@@ -55,7 +55,7 @@
         html.dark .loading-overlay { background-color: rgba(17, 24, 39, 0.8); }
         .modal-content {
             padding: 2rem; border-radius: 0.5rem;
-            max-width: 400px; width: 90%; text-align: center;
+            max-width: 400px; width: 90%;
         }
         .pendency-checkbox:checked + label {
             text-decoration: line-through;
@@ -109,12 +109,35 @@
         <p class="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">A Ligar...</p>
     </div>
     <div id="confirmation-modal" class="modal-overlay hidden">
-        <div class="modal-content">
+        <div class="modal-content text-center">
             <p id="modal-text" class="mb-6 text-lg">Tem a certeza?</p>
             <div class="flex justify-center gap-4">
                 <button id="modal-confirm-btn" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">Confirmar</button>
                 <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition">Cancelar</button>
             </div>
+        </div>
+    </div>
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-6 text-left text-gray-800 dark:text-gray-100">Editar Item</h3>
+            <form id="edit-document-form" class="space-y-4">
+                 <div>
+                    <label for="editDocName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">Nome do Item / Local</label>
+                    <input type="text" id="editDocName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                </div>
+                <div>
+                    <label for="editDocResponsible" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">Trecho</label>
+                    <select id="editDocResponsible" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                        <option value="TRECHO 1">TRECHO 1</option>
+                        <option value="TRECHO 2">TRECHO 2</option>
+                        <option value="TRECHO 3">TRECHO 3</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button type="button" id="edit-modal-cancel-btn" class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition">Cancelar</button>
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">Salvar</button>
+                </div>
+            </form>
         </div>
     </div>
     <div id="toast-container"></div>
@@ -123,7 +146,6 @@
     <div class="container mx-auto p-4 md:p-8">
         <div class="lg:grid lg:grid-cols-12 lg:gap-8">
             
-            <!-- Menu Lateral (Formulário) -->
             <aside class="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-8 self-start mb-8 lg:mb-0">
                 <div class="card p-6">
                     <div class="flex justify-between items-center mb-6">
@@ -152,8 +174,8 @@
                         <div>
                              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pendências</label>
                              <div class="flex space-x-2 mb-2">
-                                <input type="text" id="new-pendency-text" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="Descreva a pendência...">
-                                <button type="button" id="add-pendency-to-form-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition whitespace-nowrap transition-colors">Adicionar +</button>
+                                 <input type="text" id="new-pendency-text" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="Descreva a pendência...">
+                                 <button type="button" id="add-pendency-to-form-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition whitespace-nowrap transition-colors">Adicionar +</button>
                              </div>
                              <div id="pendencies-to-add-list" class="space-y-2 mt-3"></div>
                         </div>
@@ -220,30 +242,26 @@
     <!-- Módulo Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
         
-        const firebaseConfig = {
-            apiKey: "AIzaSyCDyl5g7nqsEqkf-wr0AD_S9MRSHba-MhM",
-            authDomain: "gestao-de-monitoracao.firebaseapp.com",
-            projectId: "gestao-de-monitoracao",
-            storageBucket: "gestao-de-monitoracao.firebasestorage.app",
-            messagingSenderId: "388274487667",
-            appId: "1:388274487667:web:69372989f510f237e90506"
-        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
-        const documentsCollection = collection(db, 'documents');
         
+        let userId = null;
+        let documentsCollection = null;
         let stagedPendencies = [];
         let allDocuments = [];
         let currentPage = 1;
         let currentFilter = 'Todos';
         let searchTerm = '';
+        let currentlyEditingDocId = null;
         const itemsPerPage = 6;
         const TRECHOS = ['Todos', 'TRECHO 1', 'TRECHO 2', 'TRECHO 3'];
 
@@ -259,18 +277,14 @@
         const themeToggleBtn = document.getElementById('theme-toggle');
         const darkIcon = document.getElementById('theme-toggle-dark-icon');
         const lightIcon = document.getElementById('theme-toggle-light-icon');
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-document-form');
+        const editModalCancelBtn = document.getElementById('edit-modal-cancel-btn');
         
-        // --- Lógica do Modo Escuro ---
         function applyTheme(isDark) {
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-                darkIcon.classList.remove('hidden');
-                lightIcon.classList.add('hidden');
-            } else {
-                document.documentElement.classList.remove('dark');
-                darkIcon.classList.add('hidden');
-                lightIcon.classList.remove('hidden');
-            }
+            document.documentElement.classList.toggle('dark', isDark);
+            darkIcon.classList.toggle('hidden', !isDark);
+            lightIcon.classList.toggle('hidden', isDark);
         }
 
         themeToggleBtn.addEventListener('click', () => {
@@ -279,17 +293,13 @@
             applyTheme(isDark);
         });
 
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        applyTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+        applyTheme(localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches));
 
-        // --- Funções da UI (Toasts, Modals, etc.) ---
         function showToast(message, type = 'success') {
-            const toastContainer = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
-            toastContainer.appendChild(toast);
+            document.getElementById('toast-container').appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 100);
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -299,15 +309,13 @@
 
         function showConfirmationModal(text, onConfirm) {
             const modal = document.getElementById('confirmation-modal');
-            const modalText = document.getElementById('modal-text');
             const confirmBtn = document.getElementById('modal-confirm-btn');
             const cancelBtn = document.getElementById('modal-cancel-btn');
-
-            modalText.textContent = text;
+            document.getElementById('modal-text').textContent = text;
             modal.classList.remove('hidden');
 
             const confirmHandler = () => { onConfirm(); closeModal(); };
-            const cancelHandler = () => { closeModal(); };
+            const cancelHandler = () => closeModal();
             
             const closeModal = () => {
                 modal.classList.add('hidden');
@@ -315,34 +323,52 @@
                 cancelBtn.removeEventListener('click', cancelHandler);
             }
 
-            confirmBtn.addEventListener('click', confirmHandler);
-            cancelBtn.addEventListener('click', cancelHandler);
+            confirmBtn.addEventListener('click', confirmHandler, { once: true });
+            cancelBtn.addEventListener('click', cancelHandler, { once: true });
         }
         
         function showLoadingButton(isSending) {
             const buttonText = document.getElementById('button-text');
             const buttonSpinner = document.getElementById('button-spinner');
-            if (isSending) {
-                buttonText.textContent = "A Enviar...";
-                buttonSpinner.classList.remove('hidden');
-                submitButton.disabled = true;
-            } else {
-                buttonText.textContent = "Registar Item";
-                buttonSpinner.classList.add('hidden');
-                submitButton.disabled = false;
+            buttonText.textContent = isSending ? "A Enviar..." : "Registar Item";
+            buttonSpinner.classList.toggle('hidden', !isSending);
+            submitButton.disabled = isSending;
+        }
+
+        function openEditModal(doc) {
+            currentlyEditingDocId = doc.id;
+            document.getElementById('editDocName').value = doc.data.name;
+            document.getElementById('editDocResponsible').value = doc.data.responsible;
+            editModal.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            currentlyEditingDocId = null;
+            editModal.classList.add('hidden');
+            editForm.reset();
+        }
+
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentlyEditingDocId) return;
+
+            const updatedData = {
+                name: document.getElementById('editDocName').value,
+                responsible: document.getElementById('editDocResponsible').value,
+            };
+
+            const docRef = doc(db, documentsCollection.path, currentlyEditingDocId);
+            try {
+                await updateDoc(docRef, updatedData);
+                showToast('Item atualizado com sucesso!', 'success');
+                closeEditModal();
+            } catch (error) {
+                console.error("Erro ao atualizar o item:", error);
+                showToast('Falha ao atualizar o item.', 'error');
             }
-        }
-        
-        function renderStagedPendencies() {
-            pendenciesToAddList.innerHTML = stagedPendencies.length === 0 
-                ? `<p class="text-sm text-gray-400 text-center italic">Nenhuma pendência adicionada.</p>`
-                : stagedPendencies.map((text, index) => `
-                    <div class="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm">
-                        <span>${text}</span>
-                        <button type="button" data-index="${index}" class="remove-staged-pendency-btn text-gray-400 hover:text-red-500 transition">&times;</button>
-                    </div>`).join('');
-        }
-        
+        });
+        editModalCancelBtn.addEventListener('click', closeEditModal);
+
         function setupFilters() {
             filterContainer.innerHTML = TRECHOS.map((trecho, index) => `
                 <button type="button" class="filter-btn px-4 py-2 text-sm font-medium
@@ -372,23 +398,74 @@
         
         onAuthStateChanged(auth, user => {
             if (user) {
+                userId = user.uid;
+                const collectionPath = `/artifacts/${appId}/users/${userId}/documents`;
+                documentsCollection = collection(db, collectionPath);
                 listenToDocuments();
                 setupFilters();
             } else {
-                signInAnonymously(auth).catch(error => {
-                    console.error("Falha na autenticação anónima:", error);
-                    let userMessage = "Erro de autenticação. Não foi possível conectar ao serviço.";
-                    if (error.code === 'auth/configuration-not-found') {
-                        userMessage = "Erro de Configuração: O método 'Anónimo' não está ativado no seu painel Firebase.";
+                const performSignIn = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Falha na autenticação:", error);
+                        showToast("Erro de autenticação. Não foi possível conectar.", 'error');
+                        loadingScreen.classList.add('hidden');
                     }
-                    showToast(userMessage, 'error');
-                    loadingScreen.classList.add('hidden');
-                });
+                };
+                performSignIn();
+            }
+        });
+        
+        // CORREÇÃO: Função para renderizar pendências no formulário
+        function renderStagedPendencies() {
+            pendenciesToAddList.innerHTML = stagedPendencies.length === 0 
+                ? `<p class="text-sm text-gray-400 text-center italic">Nenhuma pendência adicionada.</p>`
+                : stagedPendencies.map((text, index) => `
+                    <div class="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm">
+                        <span>${text}</span>
+                        <button type="button" data-index="${index}" class="remove-staged-pendency-btn text-gray-400 hover:text-red-500 transition">&times;</button>
+                    </div>`).join('');
+        }
+
+        // CORREÇÃO: Listeners para adicionar e remover pendências do formulário
+        addPendencyToFormBtn.addEventListener('click', () => {
+            const text = newPendencyTextInput.value.trim();
+            if (text) {
+                stagedPendencies.push(text);
+                newPendencyTextInput.value = '';
+                renderStagedPendencies();
+            }
+            newPendencyTextInput.focus();
+        });
+
+        newPendencyTextInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addPendencyToFormBtn.click();
             }
         });
 
+        pendenciesToAddList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-staged-pendency-btn')) {
+                const index = parseInt(e.target.dataset.index, 10);
+                stagedPendencies.splice(index, 1);
+                renderStagedPendencies();
+            }
+        });
+
+        // CORREÇÃO: Listener de submissão do formulário de adição
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!documentsCollection) {
+                showToast('A aplicação ainda está a inicializar. Tente novamente.', 'error');
+                return;
+            }
+
             showLoadingButton(true);
             const docName = document.getElementById('docName').value;
             const docResponsible = document.getElementById('docResponsible').value;
@@ -398,7 +475,7 @@
                 const fileData = [];
                 if (files.length > 0) {
                     const uploadPromises = Array.from(files).map(file => {
-                        const filePath = `files/${Date.now()}_${file.name}`;
+                        const filePath = `${userId}/files/${Date.now()}_${file.name}`;
                         const storageRef = ref(storage, filePath);
                         return uploadBytes(storageRef, file).then(snapshot => 
                             getDownloadURL(snapshot.ref).then(url => ({ name: file.name, url, path: filePath }))
@@ -418,114 +495,160 @@
                 showLoadingButton(false);
             }
         });
-        
+
         function renderDocuments(documentsToRender) {
             const listElement = document.getElementById('documents-list');
             const emptyState = document.getElementById('empty-state');
-            listElement.innerHTML = '';
+            listElement.innerHTML = ''; 
 
-            if (documentsToRender.length === 0) {
-                emptyState.classList.remove('hidden');
-                listElement.classList.add('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                listElement.classList.remove('hidden');
-            }
+            emptyState.classList.toggle('hidden', documentsToRender.length > 0);
+            listElement.classList.toggle('hidden', documentsToRender.length === 0);
             
-            let totalPendencies = 0;
-            let completedPendencies = 0;
-            allDocuments.forEach(doc => {
-                 const data = doc.data;
-                totalPendencies += data.pendencies?.length || 0;
-                completedPendencies += data.pendencies?.filter(p => p.status === 'concluido').length || 0;
-            });
-            
-            const trechoColors = { 'TRECHO 1': 'bg-blue-100 text-blue-800', 'TRECHO 2': 'bg-green-100 text-green-800', 'TRECHO 3': 'bg-yellow-100 text-yellow-800' };
-
             documentsToRender.forEach(docData => {
-                const { id, data } = docData;
-                const card = document.createElement('div');
-                card.className = 'card p-6 flex flex-col';
-                card.setAttribute('data-id', id);
-                
-                const creationDate = data.createdAt.toDate().toLocaleDateString('pt-BR');
-                const trechoColor = trechoColors[data.responsible] || 'bg-gray-100 text-gray-800';
-
-                const cardTotal = data.pendencies?.length || 0;
-                const cardCompleted = data.pendencies?.filter(p => p.status === 'concluido').length || 0;
-                const cardPercentage = cardTotal > 0 ? (cardCompleted / cardTotal) * 100 : 0;
-                
-                let filesHtml = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum ficheiro anexado.</p>';
-                if (data.files && data.files.length > 0) {
-                    filesHtml = data.files.map(file => `
-                        <a href="${file.url}" target="_blank" class="flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm p-1 rounded transition group">
-                            <i class="fas fa-file-download mr-2 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
-                            <span>${file.name}</span>
-                        </a>
-                    `).join('');
-                }
-
-                let pendenciesHtml = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma pendência registada.</p>';
-                if (data.pendencies && data.pendencies.length > 0) {
-                     pendenciesHtml = data.pendencies.map((pend, index) => {
-                         const evidenceHtml = pend.evidenceUrl
-                            ? `<a href="${pend.evidenceUrl}" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center group">
-                                 <i class="fas fa-camera mr-1 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i> Ver Evidência
-                               </a>`
-                            : `<input type="file" accept="image/*" class="evidence-upload-input w-full text-xs text-gray-500 dark:text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-300 hover:file:bg-blue-100 dark:hover:file:bg-gray-600" data-pendency-index="${index}">`;
-
-                        return `
-                            <div class="pendency-item py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <input type="checkbox" id="pendency-${id}-${index}" class="pendency-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-100 dark:bg-gray-900" data-pendency-index="${index}" ${pend.status === 'concluido' ? 'checked' : ''}>
-                                        <label for="pendency-${id}-${index}" class="ml-3 text-sm text-gray-800 dark:text-gray-300 break-all">${pend.text}</label>
-                                    </div>
-                                </div>
-                                <div class="evidence-section pl-7 pt-2 space-y-1 ${pend.status === 'concluido' ? '' : 'hidden'}">
-                                    ${evidenceHtml}
-                                    <div class="evidence-spinner hidden flex items-center"><i class="fas fa-spinner fa-spin text-blue-600"></i><span class="text-xs ml-2 text-gray-500 dark:text-gray-400">A Enviar...</span></div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-
-                card.innerHTML = `
-                    <div class="flex-grow">
-                        <div class="flex justify-between items-start mb-2">
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">${data.name}</h3>
-                                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    <span class="font-medium px-2 py-0.5 rounded-full ${trechoColor}">${data.responsible}</span>
-                                    <span>|</span>
-                                    <span>${creationDate}</span>
-                                </div>
-                            </div>
-                            <button class="delete-doc-btn text-gray-400 hover:text-red-600 transition"><i class="fas fa-trash-alt fa-lg"></i></button>
-                        </div>
-                        <div class="mb-4">
-                             <div class="progress-bar h-2 w-full"><div class="progress-bar-inner" style="width: ${cardPercentage}%;"></div></div>
-                             <p class="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">${cardCompleted} de ${cardTotal} concluídas</p>
-                        </div>
-                        <div class="mb-6">
-                            <h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-1">Ficheiros</h4>
-                            <div class="space-y-1">${filesHtml}</div>
-                        </div>
-                        <div>
-                             <h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-3 border-b dark:border-gray-700 pb-1">Pendências</h4>
-                             <div class="pendencies-list">${pendenciesHtml}</div>
-                        </div>
-                    </div>`;
+                const card = createDocumentCard(docData);
                 listElement.appendChild(card);
             });
             
+            updateSummary();
+        }
+
+        function createDocumentCard(docData) {
+            const { id, data } = docData;
+            const card = document.createElement('div');
+            card.className = 'card p-6 flex flex-col';
+            card.setAttribute('data-id', id);
+
+            const cardContent = document.createElement('div');
+            cardContent.className = 'flex-grow';
+
+            cardContent.appendChild(createCardHeader(docData));
+            cardContent.appendChild(createCardProgress(data));
+            cardContent.appendChild(createCardSection('Ficheiros', createFilesList(data.files)));
+            cardContent.appendChild(createCardSection('Pendências', createPendenciesList(id, data.pendencies)));
+            
+            card.appendChild(cardContent);
+            return card;
+        }
+
+        function createCardHeader(docData) {
+            const { data } = docData;
+            const trechoColors = { 'TRECHO 1': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300', 'TRECHO 2': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300', 'TRECHO 3': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' };
+            const trechoColor = trechoColors[data.responsible] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+            
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-start mb-2';
+
+            const infoDiv = document.createElement('div');
+            const title = document.createElement('h3');
+            title.className = 'text-xl font-bold text-gray-800 dark:text-gray-100';
+            title.textContent = data.name;
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1';
+            metaDiv.innerHTML = `
+                <span class="font-medium px-2 py-0.5 rounded-full ${trechoColor}">${data.responsible}</span>
+                <span>|</span>
+                <span>${data.createdAt.toDate().toLocaleDateString('pt-BR')}</span>`;
+            
+            infoDiv.append(title, metaDiv);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'flex items-center gap-3';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-doc-btn text-gray-400 hover:text-blue-600 transition';
+            editBtn.innerHTML = '<i class="fas fa-pencil-alt fa-lg"></i>';
+            editBtn.onclick = () => openEditModal(docData);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-doc-btn text-gray-400 hover:text-red-600 transition';
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt fa-lg"></i>';
+
+            actionsDiv.append(editBtn, deleteBtn);
+            header.append(infoDiv, actionsDiv);
+            return header;
+        }
+
+        function createCardProgress(data) {
+            const cardTotal = data.pendencies?.length || 0;
+            const cardCompleted = data.pendencies?.filter(p => p.status === 'concluido').length || 0;
+            const cardPercentage = cardTotal > 0 ? (cardCompleted / cardTotal) * 100 : 0;
+            
+            const container = document.createElement('div');
+            container.className = 'mb-4';
+            container.innerHTML = `
+                <div class="progress-bar h-2 w-full"><div class="progress-bar-inner" style="width: ${cardPercentage}%;"></div></div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">${cardCompleted} de ${cardTotal} concluídas</p>`;
+            return container;
+        }
+
+        function createCardSection(title, contentElement) {
+            const section = document.createElement('div');
+            section.className = 'mb-6';
+            section.innerHTML = `<h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-1">${title}</h4>`;
+            section.appendChild(contentElement);
+            return section;
+        }
+
+        function createFilesList(files) {
+            const container = document.createElement('div');
+            container.className = 'space-y-1';
+            if (!files || files.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum ficheiro anexado.</p>';
+            } else {
+                files.forEach(file => {
+                    const link = document.createElement('a');
+                    link.href = file.url;
+                    link.target = '_blank';
+                    link.className = 'flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm p-1 rounded transition group';
+                    link.innerHTML = `<i class="fas fa-file-download mr-2 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i><span>${file.name}</span>`;
+                    container.appendChild(link);
+                });
+            }
+            return container;
+        }
+
+        function createPendenciesList(docId, pendencies) {
+            const container = document.createElement('div');
+            container.className = 'pendencies-list';
+            if (!pendencies || pendencies.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma pendência registada.</p>';
+            } else {
+                pendencies.forEach((pend, index) => {
+                    const isConcluido = pend.status === 'concluido';
+                    const evidenceHtml = pend.evidenceUrl
+                        ? `<a href="${pend.evidenceUrl}" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center group"><i class="fas fa-camera mr-1 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i> Ver Evidência</a>`
+                        : `<input type="file" accept="image/*" class="evidence-upload-input w-full text-xs text-gray-500 dark:text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-300 hover:file:bg-blue-100 dark:hover:file:bg-gray-600" data-pendency-index="${index}">`;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'pendency-item py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0';
+                    item.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="pendency-${docId}-${index}" class="pendency-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-100 dark:bg-gray-900" data-pendency-index="${index}" ${isConcluido ? 'checked' : ''}>
+                                <label for="pendency-${docId}-${index}" class="ml-3 text-sm text-gray-800 dark:text-gray-300 break-all">${pend.text}</label>
+                            </div>
+                        </div>
+                        <div class="evidence-section pl-7 pt-2 space-y-1 ${isConcluido ? '' : 'hidden'}">
+                            ${evidenceHtml}
+                            <div class="evidence-spinner hidden flex items-center"><i class="fas fa-spinner fa-spin text-blue-600"></i><span class="text-xs ml-2 text-gray-500 dark:text-gray-400">A Enviar...</span></div>
+                        </div>`;
+                    container.appendChild(item);
+                });
+            }
+            return container;
+        }
+
+        function updateSummary() {
+            let totalPendencies = allDocuments.reduce((acc, doc) => acc + (doc.data.pendencies?.length || 0), 0);
+            let completedPendencies = allDocuments.reduce((acc, doc) => acc + (doc.data.pendencies?.filter(p => p.status === 'concluido').length || 0), 0);
+
             const overallPercentage = totalPendencies > 0 ? (completedPendencies / totalPendencies) * 100 : 0;
             document.getElementById('summary-progress-bar').style.width = `${overallPercentage}%`;
             document.getElementById('summary-progress-text').textContent = `${Math.round(overallPercentage)}%`;
             document.getElementById('summary-details-text').textContent = `${completedPendencies} de ${totalPendencies} pendências concluídas`;
         }
-
+        
         function renderPaginationControls(filteredDocs) {
             paginationControls.innerHTML = '';
             const totalPages = Math.ceil(filteredDocs.length / itemsPerPage);
@@ -537,24 +660,15 @@
                 <span class="text-sm text-gray-700 dark:text-gray-300">Página ${currentPage} de ${totalPages}</span>
                 <button id="next-page-btn" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">Próximo</button>
             `;
-            const prevBtn = document.getElementById('prev-page-btn');
-            const nextBtn = document.getElementById('next-page-btn');
-
-            prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
-
-            prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; updateView(); } });
-            nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; updateView(); } });
+            document.getElementById('prev-page-btn').addEventListener('click', () => { if (currentPage > 1) { currentPage--; updateView(); } });
+            document.getElementById('next-page-btn').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; updateView(); } });
+            document.getElementById('prev-page-btn').disabled = currentPage === 1;
+            document.getElementById('next-page-btn').disabled = currentPage === totalPages;
         }
         
         function updateView() {
-            let filtered = [...allDocuments];
-            if (currentFilter !== 'Todos') {
-                filtered = filtered.filter(doc => doc.data.responsible === currentFilter);
-            }
-            if (searchTerm) {
-                filtered = filtered.filter(doc => doc.data.name.toLowerCase().includes(searchTerm));
-            }
+            let filtered = allDocuments.filter(doc => (currentFilter === 'Todos' || doc.data.responsible === currentFilter) &&
+                                                    (doc.data.name.toLowerCase().includes(searchTerm)));
             
             const totalPages = Math.ceil(filtered.length / itemsPerPage);
             if (currentPage > totalPages && totalPages > 0) { currentPage = totalPages; }
@@ -567,44 +681,34 @@
         }
 
         function listenToDocuments() {
+            if (!documentsCollection) return;
             onSnapshot(documentsCollection, (snapshot) => {
                 allDocuments = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-                allDocuments.sort((a, b) => {
-                    // Adiciona verificação para garantir que createdAt existe
-                    const timeA = a.data.createdAt ? a.data.createdAt.toMillis() : 0;
-                    const timeB = b.data.createdAt ? b.data.createdAt.toMillis() : 0;
-                    return timeB - timeA;
-                });
+                allDocuments.sort((a, b) => (b.data.createdAt?.toMillis() || 0) - (a.data.createdAt?.toMillis() || 0));
                 
                 if (!loadingScreen.classList.contains('hidden')) {
                     loadingScreen.style.opacity = '0';
                     setTimeout(() => loadingScreen.classList.add('hidden'), 300);
                 }
-
                 updateView();
-                renderStagedPendencies();
             });
         }
-
+        
+        // CORREÇÃO: Listeners de eventos na lista de documentos (delegação)
         document.getElementById('documents-list').addEventListener('click', async (e) => {
-            const target = e.target;
-            const card = target.closest('.card');
-            if (!card) return;
-            const docId = card.dataset.id;
-            const docRef = doc(db, 'documents', docId);
-
-            if (target.closest('.delete-doc-btn')) {
+            const deleteBtn = e.target.closest('.delete-doc-btn');
+            if (deleteBtn) {
+                const card = deleteBtn.closest('.card');
+                const docId = card.dataset.id;
+                const docRef = doc(db, documentsCollection.path, docId);
+                
                 showConfirmationModal('Tem a certeza de que deseja apagar este item e todos os seus ficheiros e evidências?', async () => {
                     try {
                         const docData = (await getDoc(docRef)).data();
-                        const deletePromises = [];
-                        if (docData.files && docData.files.length > 0) {
-                            docData.files.forEach(file => { if (file.path) deletePromises.push(deleteObject(ref(storage, file.path))) });
-                        }
-                        if (docData.pendencies && docData.pendencies.length > 0) {
-                           docData.pendencies.forEach(p => { if (p.evidencePath) deletePromises.push(deleteObject(ref(storage, p.evidencePath))) });
-                        }
-                        if (deletePromises.length > 0) await Promise.all(deletePromises);
+                        const deletePromises = (docData.files || []).map(file => file.path && deleteObject(ref(storage, file.path)));
+                        (docData.pendencies || []).forEach(p => p.evidencePath && deletePromises.push(deleteObject(ref(storage, p.evidencePath))));
+                        
+                        await Promise.all(deletePromises.filter(Boolean));
                         await deleteDoc(docRef);
                         showToast('Item excluído com sucesso!', 'success');
                     } catch (error) {
@@ -614,55 +718,50 @@
                 });
             }
         });
-
+        
         document.getElementById('documents-list').addEventListener('change', async (e) => {
             const target = e.target;
             const card = target.closest('.card');
             if (!card) return;
             const docId = card.dataset.id;
-            const docRef = doc(db, 'documents', docId);
+            const docRef = doc(db, documentsCollection.path, docId);
 
             if (target.classList.contains('pendency-checkbox')) {
-                const pendencyIndex = target.dataset.pendencyIndex;
+                const pendencyIndex = parseInt(target.dataset.pendencyIndex, 10);
                 const isChecked = target.checked;
-                const pendencyItem = target.closest('.pendency-item');
-                const evidenceSection = pendencyItem.querySelector('.evidence-section');
-                isChecked ? evidenceSection.classList.remove('hidden') : evidenceSection.classList.add('hidden');
-
                 const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const pendencies = docSnap.data().pendencies;
-                    const currentPendency = pendencies[pendencyIndex];
-                    if (!isChecked && currentPendency.evidenceUrl) {
-                        showConfirmationModal('Desmarcar esta pendência também removerá a evidência. Deseja continuar?', async () => {
-                            if (currentPendency.evidencePath) await deleteObject(ref(storage, currentPendency.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
-                            currentPendency.status = 'pendente';
-                            delete currentPendency.evidenceUrl;
-                            delete currentPendency.evidencePath;
-                            await updateDoc(docRef, { pendencies });
-                        });
-                        target.checked = true;
-                        evidenceSection.classList.remove('hidden');
-                    } else {
-                        currentPendency.status = isChecked ? 'concluido' : 'pendente';
+                if (!docSnap.exists()) return;
+
+                const pendencies = docSnap.data().pendencies;
+                const currentPendency = pendencies[pendencyIndex];
+
+                if (!isChecked && currentPendency.evidenceUrl) {
+                    showConfirmationModal('Desmarcar esta pendência também removerá a evidência. Deseja continuar?', async () => {
+                        if (currentPendency.evidencePath) await deleteObject(ref(storage, currentPendency.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
+                        pendencies[pendencyIndex] = { ...currentPendency, status: 'pendente', evidenceUrl: undefined, evidencePath: undefined };
                         await updateDoc(docRef, { pendencies });
-                    }
+                    });
+                    target.checked = true; // Reverte visualmente até confirmação
+                } else {
+                    pendencies[pendencyIndex].status = isChecked ? 'concluido' : 'pendente';
+                    await updateDoc(docRef, { pendencies });
                 }
             }
 
             if (target.classList.contains('evidence-upload-input')) {
                 const file = target.files[0];
                 if (!file) return;
-                const pendencyIndex = target.dataset.pendencyIndex;
-                const pendencyItem = target.closest('.pendency-item');
-                const spinner = pendencyItem.querySelector('.evidence-spinner');
+                const pendencyIndex = parseInt(target.dataset.pendencyIndex, 10);
+                const spinner = target.closest('.evidence-section').querySelector('.evidence-spinner');
+                
                 try {
                     target.classList.add('hidden');
                     spinner.classList.remove('hidden');
-                    const filePath = `evidence/${docId}/${Date.now()}_${file.name}`;
+                    const filePath = `${userId}/evidence/${docId}/${Date.now()}_${file.name}`;
                     const storageRef = ref(storage, filePath);
                     const snapshot = await uploadBytes(storageRef, file);
                     const downloadURL = await getDownloadURL(snapshot.ref);
+
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
                         const pendencies = docSnap.data().pendencies;
@@ -678,29 +777,6 @@
                 } finally {
                     spinner.classList.add('hidden');
                 }
-            }
-        });
-        
-        addPendencyToFormBtn.addEventListener('click', () => {
-            const text = newPendencyTextInput.value.trim();
-            if (text) {
-                stagedPendencies.push(text);
-                newPendencyTextInput.value = '';
-                renderStagedPendencies();
-            }
-            newPendencyTextInput.focus();
-        });
-        newPendencyTextInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addPendencyToFormBtn.click();
-            }
-        });
-        pendenciesToAddList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-staged-pendency-btn')) {
-                const index = parseInt(e.target.dataset.index, 10);
-                stagedPendencies.splice(index, 1);
-                renderStagedPendencies();
             }
         });
     </script>
