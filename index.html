@@ -1,34 +1,50 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" class=""> <!-- A classe 'dark' será adicionada aqui pelo JS -->
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Monitoração</title>
+    <title>Gestão de Monitorização</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Estilos Base e Transições */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #1f2937; /* text-gray-800 */
+            transition: background-color 0.3s, color 0.3s;
         }
-        .card {
-            background-color: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease-in-out;
+        .card, .modal-content {
+            background-color: #ffffff; /* bg-white */
+            transition: background-color 0.3s;
         }
         .progress-bar {
-            background-color: #e5e7eb;
+            background-color: #e5e7eb; /* bg-gray-200 */
             border-radius: 9999px;
             overflow: hidden;
+            transition: background-color 0.3s;
         }
         .progress-bar-inner {
-            background-color: #22c55e;
+            background-color: #22c55e; /* bg-green-500 */
             height: 100%;
             transition: width 0.5s ease-in-out;
         }
+
+        /* Modo Escuro */
+        html.dark body {
+            background-color: #111827; /* dark:bg-gray-900 */
+            color: #e5e7eb; /* dark:text-gray-200 */
+        }
+        html.dark .card, html.dark .modal-content {
+            background-color: #1f2937; /* dark:bg-gray-800 */
+        }
+        html.dark .progress-bar {
+            background-color: #374151; /* dark:bg-gray-700 */
+        }
+
+        /* Estilos de Componentes (geralmente não precisam de muitas alterações de cor) */
         .modal-overlay, .loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             display: flex; align-items: center; justify-content: center;
@@ -36,11 +52,18 @@
         }
         .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
         .loading-overlay { background-color: rgba(255, 255, 255, 0.8); z-index: 100; }
+        html.dark .loading-overlay { background-color: rgba(17, 24, 39, 0.8); }
         .modal-content {
-            background: white; padding: 2rem; border-radius: 0.5rem;
+            padding: 2rem; border-radius: 0.5rem;
             max-width: 400px; width: 90%; text-align: center;
         }
-        .pendency-checkbox:checked + label { text-decoration: line-through; color: #6b7280; }
+        .pendency-checkbox:checked + label {
+            text-decoration: line-through;
+            color: #6b7280; /* text-gray-500 */
+        }
+        html.dark .pendency-checkbox:checked + label {
+            color: #9ca3af; /* dark:text-gray-400 */
+        }
         
         .toast {
             position: fixed; bottom: 1.5rem; right: 1.5rem;
@@ -54,7 +77,27 @@
         .toast.success { background-color: #22c55e; }
         .toast.error { background-color: #ef4444; }
 
-        .filter-btn.active { background-color: #3b82f6; color: white; }
+        .filter-btn.active {
+            background-color: #2563eb; /* bg-blue-600 */
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+        .filter-btn {
+            border: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            color: #111827;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        .filter-btn:hover { background-color: #f9fafb; }
+        html.dark .filter-btn {
+            border-color: #4b5563;
+            background-color: #374151;
+            color: #e5e7eb;
+        }
+        html.dark .filter-btn:hover { background-color: #4b5563; }
+        html.dark .filter-btn.active {
+             border-color: #2563eb;
+        }
     </style>
 </head>
 
@@ -63,14 +106,14 @@
     <!-- Overlays -->
     <div id="loading-screen" class="loading-overlay">
         <i class="fas fa-spinner fa-spin fa-3x text-blue-600"></i>
-        <p class="mt-4 text-lg font-medium text-gray-700">Conectando...</p>
+        <p class="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">A Ligar...</p>
     </div>
     <div id="confirmation-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <p id="modal-text" class="mb-6 text-lg">Você tem certeza?</p>
+            <p id="modal-text" class="mb-6 text-lg">Tem a certeza?</p>
             <div class="flex justify-center gap-4">
                 <button id="modal-confirm-btn" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">Confirmar</button>
-                <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition">Cancelar</button>
+                <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition">Cancelar</button>
             </div>
         </div>
     </div>
@@ -83,38 +126,44 @@
             <!-- Menu Lateral (Formulário) -->
             <aside class="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-8 self-start mb-8 lg:mb-0">
                 <div class="card p-6">
-                    <h2 class="text-2xl font-semibold mb-6 text-gray-700">Cadastrar Novo Item</h2>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-semibold text-gray-700 dark:text-gray-200">Registar Item</h2>
+                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors">
+                            <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
+                            <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                        </button>
+                    </div>
                     <form id="add-document-form" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                             <div>
-                                <label for="docName" class="block text-sm font-medium text-gray-700 mb-1">Nome do Item / Local</label>
-                                <input type="text" id="docName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                                <label for="docName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Item / Local</label>
+                                <input type="text" id="docName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
                             </div>
                             <div>
-                                <label for="docResponsible" class="block text-sm font-medium text-gray-700 mb-1">Trecho</label>
-                                <select id="docResponsible" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white" required>
-                                    <option value="" disabled selected>Selecione um trecho</option>
-                                    <option value="TRECHO 1">TRECHO 1</option>
-                                    <option value="TRECHO 2">TRECHO 2</option>
-                                    <option value="TRECHO 3">TRECHO 3</option>
+                                <label for="docResponsible" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Troço</label>
+                                <select id="docResponsible" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                                    <option value="" disabled selected>Selecione um troço</option>
+                                    <option value="TROÇO 1">TROÇO 1</option>
+                                    <option value="TROÇO 2">TROÇO 2</option>
+                                    <option value="TROÇO 3">TROÇO 3</option>
                                 </select>
                             </div>
                         </div>
                         <div>
-                             <label class="block text-sm font-medium text-gray-700 mb-2">Pendências</label>
+                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pendências</label>
                              <div class="flex space-x-2 mb-2">
-                                <input type="text" id="new-pendency-text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Descreva a pendência...">
-                                <button type="button" id="add-pendency-to-form-btn" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition whitespace-nowrap">Adicionar +</button>
+                                <input type="text" id="new-pendency-text" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="Descreva a pendência...">
+                                <button type="button" id="add-pendency-to-form-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition whitespace-nowrap transition-colors">Adicionar +</button>
                              </div>
                              <div id="pendencies-to-add-list" class="space-y-2 mt-3"></div>
                         </div>
                         <div>
-                            <label for="docFiles" class="block text-sm font-medium text-gray-700 mb-1">Anexar Arquivos (opcional)</label>
-                            <input type="file" id="docFiles" multiple class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <label for="docFiles" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Anexar Ficheiros (opcional)</label>
+                            <input type="file" id="docFiles" multiple class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-300 hover:file:bg-blue-100 dark:hover:file:bg-gray-600 transition-colors">
                         </div>
-                        <div class="text-right pt-4 border-t">
+                        <div class="text-right pt-4 border-t border-gray-200 dark:border-gray-700 transition-colors">
                             <button type="submit" id="submit-button" class="inline-flex items-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <span id="button-text">Cadastrar Item</span>
+                                <span id="button-text">Registar Item</span>
                                 <i id="button-spinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
                             </button>
                         </div>
@@ -125,29 +174,29 @@
             <!-- Conteúdo Principal -->
             <main class="lg:col-span-8 xl:col-span-9">
                 <header class="text-center mb-10">
-                    <h1 class="text-4xl font-bold text-gray-800">Gestão de Monitoração</h1>
-                    <p class="text-lg text-gray-600 mt-2">Plataforma para acompanhamento de pendências.</p>
+                    <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100">Gestão de Monitorização</h1>
+                    <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Plataforma para acompanhamento de pendências.</p>
                 </header>
 
                 <div class="card p-6 mb-8">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Progresso Geral</h2>
+                    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Progresso Geral</h2>
                     <div class="flex items-center">
                         <div class="w-full progress-bar h-4 mr-4">
                             <div id="summary-progress-bar" class="progress-bar-inner" style="width: 0%;"></div>
                         </div>
-                        <span id="summary-progress-text" class="text-lg font-bold text-gray-800">0%</span>
+                        <span id="summary-progress-text" class="text-lg font-bold text-gray-800 dark:text-gray-200">0%</span>
                     </div>
-                    <p id="summary-details-text" class="text-sm text-gray-500 mt-2">0 de 0 pendências concluídas</p>
+                    <p id="summary-details-text" class="text-sm text-gray-500 dark:text-gray-400 mt-2">0 de 0 pendências concluídas</p>
                 </div>
 
                 <div class="card p-4 mb-8">
                     <div class="flex flex-col md:flex-row gap-4 items-center">
                         <div class="w-full md:w-auto">
-                            <span class="text-sm font-medium text-gray-700 mr-2">Filtrar por Trecho:</span>
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Filtrar por Troço:</span>
                             <div id="filter-container" class="inline-flex rounded-lg shadow-sm" role="group"></div>
                         </div>
                         <div class="relative w-full md:w-1/2 lg:w-1/3">
-                            <input type="search" id="search-input" placeholder="Pesquisar por nome..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <input type="search" id="search-input" placeholder="Pesquisar por nome..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-gray-400"></i>
                             </div>
@@ -159,8 +208,8 @@
                      <div id="documents-list" class="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8"></div>
                      <div id="empty-state" class="hidden text-center py-16">
                          <i class="fas fa-folder-open fa-4x text-gray-300"></i>
-                         <h3 class="mt-4 text-xl font-semibold text-gray-700">Nenhum item encontrado</h3>
-                         <p class="mt-1 text-gray-500">Tente ajustar seus filtros ou adicione um novo item.</p>
+                         <h3 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nenhum item encontrado</h3>
+                         <p class="mt-1 text-gray-500 dark:text-gray-400">Tente ajustar os seus filtros ou adicione um novo item.</p>
                      </div>
                      <div id="pagination-controls" class="flex justify-center items-center mt-10 space-x-4"></div>
                 </div>
@@ -196,7 +245,7 @@
         let currentFilter = 'Todos';
         let searchTerm = '';
         const itemsPerPage = 6;
-        const TRECHOS = ['Todos', 'TRECHO 1', 'TRECHO 2', 'TRECHO 3'];
+        const TRECHOS = ['Todos', 'TROÇO 1', 'TROÇO 2', 'TROÇO 3'];
 
         const loadingScreen = document.getElementById('loading-screen');
         const form = document.getElementById('add-document-form');
@@ -207,7 +256,34 @@
         const paginationControls = document.getElementById('pagination-controls');
         const filterContainer = document.getElementById('filter-container');
         const searchInput = document.getElementById('search-input');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
         
+        // --- Lógica do Modo Escuro ---
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                darkIcon.classList.remove('hidden');
+                lightIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden');
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            applyTheme(isDark);
+        });
+
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+
+        // --- Funções da UI (Toasts, Modals, etc.) ---
         function showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -247,11 +323,11 @@
             const buttonText = document.getElementById('button-text');
             const buttonSpinner = document.getElementById('button-spinner');
             if (isSending) {
-                buttonText.textContent = "Enviando...";
+                buttonText.textContent = "A Enviar...";
                 buttonSpinner.classList.remove('hidden');
                 submitButton.disabled = true;
             } else {
-                buttonText.textContent = "Cadastrar Item";
+                buttonText.textContent = "Registar Item";
                 buttonSpinner.classList.add('hidden');
                 submitButton.disabled = false;
             }
@@ -261,7 +337,7 @@
             pendenciesToAddList.innerHTML = stagedPendencies.length === 0 
                 ? `<p class="text-sm text-gray-400 text-center italic">Nenhuma pendência adicionada.</p>`
                 : stagedPendencies.map((text, index) => `
-                    <div class="flex items-center justify-between p-2 bg-gray-100 rounded-md text-sm">
+                    <div class="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm">
                         <span>${text}</span>
                         <button type="button" data-index="${index}" class="remove-staged-pendency-btn text-gray-400 hover:text-red-500 transition">&times;</button>
                     </div>`).join('');
@@ -269,7 +345,7 @@
         
         function setupFilters() {
             filterContainer.innerHTML = TRECHOS.map((trecho, index) => `
-                <button type="button" class="filter-btn px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 
+                <button type="button" class="filter-btn px-4 py-2 text-sm font-medium
                     ${index === 0 ? 'rounded-l-lg' : ''} 
                     ${index === TRECHOS.length - 1 ? 'rounded-r-lg' : 'border-b border-t border-r-0'}
                     ${trecho === 'Todos' ? 'active' : ''}" data-filter="${trecho}">
@@ -298,14 +374,12 @@
             if (user) {
                 listenToDocuments();
                 setupFilters();
-                loadingScreen.style.opacity = '0';
-                setTimeout(() => loadingScreen.classList.add('hidden'), 300);
             } else {
                 signInAnonymously(auth).catch(error => {
-                    console.error("Falha na autenticação anônima:", error);
+                    console.error("Falha na autenticação anónima:", error);
                     let userMessage = "Erro de autenticação. Não foi possível conectar ao serviço.";
                     if (error.code === 'auth/configuration-not-found') {
-                        userMessage = "Erro de Configuração: O método 'Anônimo' não está ativado no seu painel Firebase.";
+                        userMessage = "Erro de Configuração: O método 'Anónimo' não está ativado no seu painel Firebase.";
                     }
                     showToast(userMessage, 'error');
                     loadingScreen.classList.add('hidden');
@@ -336,9 +410,9 @@
                 form.reset();
                 stagedPendencies = [];
                 renderStagedPendencies();
-                showToast('Item cadastrado com sucesso!', 'success');
+                showToast('Item registado com sucesso!', 'success');
             } catch (error) {
-                console.error("ERRO DE UPLOAD/CADASTRO:", error);
+                console.error("ERRO DE UPLOAD/REGISTO:", error);
                 showToast(`Ocorreu um erro: ${error.message}`, 'error');
             } finally {
                 showLoadingButton(false);
@@ -366,7 +440,7 @@
                 completedPendencies += data.pendencies?.filter(p => p.status === 'concluido').length || 0;
             });
             
-            const trechoColors = { 'TRECHO 1': 'bg-blue-100 text-blue-800', 'TRECHO 2': 'bg-green-100 text-green-800', 'TRECHO 3': 'bg-yellow-100 text-yellow-800' };
+            const trechoColors = { 'TROÇO 1': 'bg-blue-100 text-blue-800', 'TROÇO 2': 'bg-green-100 text-green-800', 'TROÇO 3': 'bg-yellow-100 text-yellow-800' };
 
             documentsToRender.forEach(docData => {
                 const { id, data } = docData;
@@ -381,36 +455,36 @@
                 const cardCompleted = data.pendencies?.filter(p => p.status === 'concluido').length || 0;
                 const cardPercentage = cardTotal > 0 ? (cardCompleted / cardTotal) * 100 : 0;
                 
-                let filesHtml = '<p class="text-sm text-gray-500">Nenhum arquivo anexado.</p>';
+                let filesHtml = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum ficheiro anexado.</p>';
                 if (data.files && data.files.length > 0) {
                     filesHtml = data.files.map(file => `
-                        <a href="${file.url}" target="_blank" class="flex items-center text-blue-600 hover:underline text-sm p-1 rounded transition group">
-                            <i class="fas fa-file-download mr-2 text-gray-400 group-hover:text-blue-600"></i>
+                        <a href="${file.url}" target="_blank" class="flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm p-1 rounded transition group">
+                            <i class="fas fa-file-download mr-2 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i>
                             <span>${file.name}</span>
                         </a>
                     `).join('');
                 }
 
-                let pendenciesHtml = '<p class="text-sm text-gray-500">Nenhuma pendência cadastrada.</p>';
+                let pendenciesHtml = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma pendência registada.</p>';
                 if (data.pendencies && data.pendencies.length > 0) {
                      pendenciesHtml = data.pendencies.map((pend, index) => {
                          const evidenceHtml = pend.evidenceUrl
-                            ? `<a href="${pend.evidenceUrl}" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center group">
-                                 <i class="fas fa-camera mr-1 text-gray-400 group-hover:text-blue-600"></i> Ver Evidência
+                            ? `<a href="${pend.evidenceUrl}" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center group">
+                                 <i class="fas fa-camera mr-1 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i> Ver Evidência
                                </a>`
-                            : `<input type="file" accept="image/*" class="evidence-upload-input w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" data-pendency-index="${index}">`;
+                            : `<input type="file" accept="image/*" class="evidence-upload-input w-full text-xs text-gray-500 dark:text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-300 hover:file:bg-blue-100 dark:hover:file:bg-gray-600" data-pendency-index="${index}">`;
 
                         return `
-                            <div class="pendency-item py-2 border-b border-gray-100 last:border-b-0">
+                            <div class="pendency-item py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <input type="checkbox" id="pendency-${id}-${index}" class="pendency-checkbox h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-pendency-index="${index}" ${pend.status === 'concluido' ? 'checked' : ''}>
-                                        <label for="pendency-${id}-${index}" class="ml-3 text-sm text-gray-800 break-all">${pend.text}</label>
+                                        <input type="checkbox" id="pendency-${id}-${index}" class="pendency-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-100 dark:bg-gray-900" data-pendency-index="${index}" ${pend.status === 'concluido' ? 'checked' : ''}>
+                                        <label for="pendency-${id}-${index}" class="ml-3 text-sm text-gray-800 dark:text-gray-300 break-all">${pend.text}</label>
                                     </div>
                                 </div>
                                 <div class="evidence-section pl-7 pt-2 space-y-1 ${pend.status === 'concluido' ? '' : 'hidden'}">
                                     ${evidenceHtml}
-                                    <div class="evidence-spinner hidden flex items-center"><i class="fas fa-spinner fa-spin text-blue-600"></i><span class="text-xs ml-2 text-gray-500">Enviando...</span></div>
+                                    <div class="evidence-spinner hidden flex items-center"><i class="fas fa-spinner fa-spin text-blue-600"></i><span class="text-xs ml-2 text-gray-500 dark:text-gray-400">A Enviar...</span></div>
                                 </div>
                             </div>
                         `;
@@ -421,8 +495,8 @@
                     <div class="flex-grow">
                         <div class="flex justify-between items-start mb-2">
                             <div>
-                                <h3 class="text-xl font-bold text-gray-800">${data.name}</h3>
-                                <div class="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">${data.name}</h3>
+                                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     <span class="font-medium px-2 py-0.5 rounded-full ${trechoColor}">${data.responsible}</span>
                                     <span>|</span>
                                     <span>${creationDate}</span>
@@ -432,14 +506,14 @@
                         </div>
                         <div class="mb-4">
                              <div class="progress-bar h-2 w-full"><div class="progress-bar-inner" style="width: ${cardPercentage}%;"></div></div>
-                             <p class="text-xs text-gray-500 text-right mt-1">${cardCompleted} de ${cardTotal} concluídas</p>
+                             <p class="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">${cardCompleted} de ${cardTotal} concluídas</p>
                         </div>
                         <div class="mb-6">
-                            <h4 class="font-semibold text-gray-700 mb-2 border-b pb-1">Arquivos</h4>
+                            <h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-1">Ficheiros</h4>
                             <div class="space-y-1">${filesHtml}</div>
                         </div>
                         <div>
-                             <h4 class="font-semibold text-gray-700 mb-3 border-b pb-1">Pendências</h4>
+                             <h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-3 border-b dark:border-gray-700 pb-1">Pendências</h4>
                              <div class="pendencies-list">${pendenciesHtml}</div>
                         </div>
                     </div>`;
@@ -459,9 +533,9 @@
             if (totalPages <= 1) return;
 
             paginationControls.innerHTML = `
-                <button id="prev-page-btn" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
-                <span class="text-sm text-gray-700">Página ${currentPage} de ${totalPages}</span>
-                <button id="next-page-btn" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">Próximo</button>
+                <button id="prev-page-btn" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
+                <span class="text-sm text-gray-700 dark:text-gray-300">Página ${currentPage} de ${totalPages}</span>
+                <button id="next-page-btn" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">Próximo</button>
             `;
             const prevBtn = document.getElementById('prev-page-btn');
             const nextBtn = document.getElementById('next-page-btn');
@@ -495,7 +569,15 @@
         function listenToDocuments() {
             onSnapshot(documentsCollection, (snapshot) => {
                 allDocuments = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+                // CORRECÇÃO: Acesso ao objeto 'data' antes de 'createdAt'
                 allDocuments.sort((a, b) => b.data.createdAt.toMillis() - a.data.createdAt.toMillis());
+                
+                // Esconde o ecrã de carregamento aqui, após os dados serem recebidos e ordenados
+                if (!loadingScreen.classList.contains('hidden')) {
+                    loadingScreen.style.opacity = '0';
+                    setTimeout(() => loadingScreen.classList.add('hidden'), 300);
+                }
+
                 updateView();
                 renderStagedPendencies();
             });
@@ -509,7 +591,7 @@
             const docRef = doc(db, 'documents', docId);
 
             if (target.closest('.delete-doc-btn')) {
-                showConfirmationModal('Tem certeza que deseja apagar este item e todos os seus arquivos e evidências?', async () => {
+                showConfirmationModal('Tem a certeza de que deseja apagar este item e todos os seus ficheiros e evidências?', async () => {
                     try {
                         const docData = (await getDoc(docRef)).data();
                         const deletePromises = [];
@@ -550,7 +632,7 @@
                     const currentPendency = pendencies[pendencyIndex];
                     if (!isChecked && currentPendency.evidenceUrl) {
                         showConfirmationModal('Desmarcar esta pendência também removerá a evidência. Deseja continuar?', async () => {
-                            if (currentPendency.evidencePath) await deleteObject(ref(storage, currentPendency.evidencePath)).catch(err => console.error("Erro ao deletar evidência", err));
+                            if (currentPendency.evidencePath) await deleteObject(ref(storage, currentPendency.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
                             currentPendency.status = 'pendente';
                             delete currentPendency.evidenceUrl;
                             delete currentPendency.evidencePath;
