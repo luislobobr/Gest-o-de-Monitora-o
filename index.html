@@ -250,7 +250,7 @@
             apiKey: "AIzaSyCDyl5g7nqsEqkf-wr0AD_S9MRSHba-MhM",
             authDomain: "gestao-de-monitoracao.firebaseapp.com",
             projectId: "gestao-de-monitoracao",
-            storageBucket: "gestao-de-monitoracao.firebasestorage.app", // Revertido para o valor original
+            storageBucket: "gestao-de-monitoracao.firebasestorage.app",
             messagingSenderId: "388274487667",
             appId: "1:388274487667:web:69372989f510f237e90506"
         };
@@ -468,7 +468,7 @@
                 const fileData = [];
                 if (files.length > 0) {
                     const uploadPromises = Array.from(files).map(file => {
-                        const filePath = `files/${Date.now()}_${file.name}`; // Caminho público
+                        const filePath = `files/${Date.now()}_${file.name}`;
                         const storageRef = ref(storage, filePath);
                         return uploadBytes(storageRef, file).then(snapshot => 
                             getDownloadURL(snapshot.ref).then(url => ({ name: file.name, url, path: filePath }))
@@ -604,9 +604,7 @@
         function createPendenciesList(docId, pendencies) {
             const container = document.createElement('div');
             container.className = 'pendencies-list';
-            if (!pendencies || pendencies.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma pendência registada.</p>';
-            } else {
+            if (pendencies && pendencies.length > 0) {
                 pendencies.forEach((pend, index) => {
                     const isConcluido = pend.status === 'concluido';
                     const evidenceHtml = pend.evidenceUrl
@@ -617,10 +615,11 @@
                     item.className = 'pendency-item py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0';
                     item.innerHTML = `
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center">
+                            <div class="flex items-center flex-grow">
                                 <input type="checkbox" id="pendency-${docId}-${index}" class="pendency-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-100 dark:bg-gray-900" data-pendency-index="${index}" ${isConcluido ? 'checked' : ''}>
                                 <label for="pendency-${docId}-${index}" class="ml-3 text-sm text-gray-800 dark:text-gray-300 break-all">${pend.text}</label>
                             </div>
+                            <button class="edit-pendency-btn text-gray-400 hover:text-blue-600 transition ml-2 px-2" data-pendency-index="${index}"><i class="fas fa-pencil-alt"></i></button>
                         </div>
                         <div class="evidence-section pl-7 pt-2 space-y-1 ${isConcluido ? '' : 'hidden'}">
                             ${evidenceHtml}
@@ -628,7 +627,18 @@
                         </div>`;
                     container.appendChild(item);
                 });
+            } else {
+                 container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma pendência registada.</p>';
             }
+
+            const addFormContainer = document.createElement('div');
+            addFormContainer.className = 'mt-4 pt-3 border-t dark:border-gray-700 flex items-center gap-2';
+            addFormContainer.innerHTML = `
+                <input type="text" class="add-pendency-input w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Adicionar nova pendência...">
+                <button class="add-pendency-btn px-4 py-1.5 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition text-sm whitespace-nowrap">Adicionar +</button>
+            `;
+            container.appendChild(addFormContainer);
+
             return container;
         }
 
@@ -688,12 +698,12 @@
         }
         
         document.getElementById('documents-list').addEventListener('click', async (e) => {
-            const deleteBtn = e.target.closest('.delete-doc-btn');
-            if (deleteBtn) {
-                const card = deleteBtn.closest('.card');
-                const docId = card.dataset.id;
-                const docRef = doc(db, documentsCollection.path, docId);
-                
+            const card = e.target.closest('.card');
+            if (!card) return;
+            const docId = card.dataset.id;
+            const docRef = doc(db, documentsCollection.path, docId);
+
+            if (e.target.closest('.delete-doc-btn')) {
                 showConfirmationModal('Tem a certeza de que deseja apagar este item e todos os seus ficheiros e evidências?', async () => {
                     try {
                         const docData = (await getDoc(docRef)).data();
@@ -706,6 +716,79 @@
                     } catch (error) {
                         console.error("Erro ao excluir item:", error);
                         showToast(`Erro ao excluir: ${error.message}`, 'error');
+                    }
+                });
+            } else if (e.target.closest('.add-pendency-btn')) {
+                const btn = e.target.closest('.add-pendency-btn');
+                const input = btn.previousElementSibling;
+                const newText = input.value.trim();
+
+                if (newText) {
+                    btn.disabled = true;
+                    try {
+                        const docSnap = await getDoc(docRef);
+                        if (docSnap.exists()) {
+                            const pendencies = docSnap.data().pendencies || [];
+                            pendencies.push({ text: newText, status: 'pendente' });
+                            await updateDoc(docRef, { pendencies });
+                            input.value = '';
+                        }
+                    } catch (error) {
+                         showToast('Erro ao adicionar pendência.', 'error');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                }
+            } else if (e.target.closest('.edit-pendency-btn')) {
+                const pendencyItem = e.target.closest('.pendency-item');
+                const pendencyIndex = e.target.closest('[data-pendency-index]').dataset.pendencyIndex;
+                const mainDiv = pendencyItem.querySelector('.flex.items-center.justify-between');
+                
+                const originalContent = mainDiv.innerHTML;
+                const labelText = mainDiv.querySelector('label').textContent;
+
+                mainDiv.innerHTML = `
+                    <div class="flex items-center gap-2 w-full">
+                        <input type="text" class="edit-pendency-input w-full px-2 py-1 border rounded-md dark:bg-gray-600 dark:border-gray-500" value="${labelText}">
+                        <button class="save-pendency-btn text-green-500 hover:text-green-600 px-2" data-pendency-index="${pendencyIndex}"><i class="fas fa-check"></i></button>
+                        <button class="delete-pendency-btn text-red-500 hover:text-red-600 px-2" data-pendency-index="${pendencyIndex}"><i class="fas fa-trash"></i></button>
+                        <button class="cancel-edit-btn text-gray-500 hover:text-gray-600 px-2"><i class="fas fa-times"></i></button>
+                    </div>
+                `;
+                mainDiv.querySelector('.cancel-edit-btn').onclick = () => { mainDiv.innerHTML = originalContent; };
+            } else if(e.target.closest('.save-pendency-btn')) {
+                const pendencyIndex = e.target.closest('[data-pendency-index]').dataset.pendencyIndex;
+                const input = e.target.closest('.flex').querySelector('.edit-pendency-input');
+                const newText = input.value.trim();
+                if (newText) {
+                    try {
+                        const docSnap = await getDoc(docRef);
+                        if(docSnap.exists()){
+                            const pendencies = docSnap.data().pendencies;
+                            pendencies[pendencyIndex].text = newText;
+                            await updateDoc(docRef, { pendencies });
+                            showToast('Pendência atualizada.', 'success');
+                        }
+                    } catch (error) {
+                        showToast('Erro ao salvar pendência.', 'error');
+                    }
+                }
+            } else if(e.target.closest('.delete-pendency-btn')) {
+                const pendencyIndex = e.target.closest('[data-pendency-index]').dataset.pendencyIndex;
+                showConfirmationModal('Tem certeza que deseja apagar esta pendência?', async () => {
+                     try {
+                        const docSnap = await getDoc(docRef);
+                        if(docSnap.exists()){
+                            const pendencies = docSnap.data().pendencies;
+                            const pendencyToRemove = pendencies.splice(pendencyIndex, 1)[0];
+                            if (pendencyToRemove && pendencyToRemove.evidencePath) {
+                                await deleteObject(ref(storage, pendencyToRemove.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
+                            }
+                            await updateDoc(docRef, { pendencies });
+                            showToast('Pendência apagada.', 'success');
+                        }
+                    } catch (error) {
+                        showToast('Erro ao apagar pendência.', 'error');
                     }
                 });
             }
@@ -754,7 +837,7 @@
                 try {
                     target.classList.add('hidden');
                     spinner.classList.remove('hidden');
-                    const filePath = `evidence/${docId}/${Date.now()}_${file.name}`; // Caminho público
+                    const filePath = `evidence/${docId}/${Date.now()}_${file.name}`;
                     const storageRef = ref(storage, filePath);
                     const snapshot = await uploadBytes(storageRef, file);
                     const downloadURL = await getDownloadURL(snapshot.ref);
