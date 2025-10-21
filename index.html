@@ -134,7 +134,11 @@
                         </button>
                     </div>
                     <form id="add-document-form" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label for="docName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Item / Local</label>
+                                <input type="text" id="docName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                            </div>
                             <div>
                                 <label for="docResponsible" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trecho</label>
                                 <select id="docResponsible" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
@@ -565,10 +569,13 @@
         function listenToDocuments() {
             onSnapshot(documentsCollection, (snapshot) => {
                 allDocuments = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-                // CORRECÇÃO: Acesso ao objeto 'data' antes de 'createdAt'
-                allDocuments.sort((a, b) => b.data.createdAt.toMillis() - a.data.createdAt.toMillis());
+                allDocuments.sort((a, b) => {
+                    // Adiciona verificação para garantir que createdAt existe
+                    const timeA = a.data.createdAt ? a.data.createdAt.toMillis() : 0;
+                    const timeB = b.data.createdAt ? b.data.createdAt.toMillis() : 0;
+                    return timeB - timeA;
+                });
                 
-                // Esconde o ecrã de carregamento aqui, após os dados serem recebidos e ordenados
                 if (!loadingScreen.classList.contains('hidden')) {
                     loadingScreen.style.opacity = '0';
                     setTimeout(() => loadingScreen.classList.add('hidden'), 300);
@@ -699,5 +706,4 @@
     </script>
 </body>
 </html>
-
 
