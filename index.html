@@ -242,12 +242,22 @@
     <!-- Módulo Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
         
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        // CORREÇÃO PARA GITHUB PAGES:
+        // As credenciais do Firebase são colocadas diretamente aqui.
+        // Em um ambiente de produção seguro ou colaborativo, estas chaves
+        // não deveriam estar expostas diretamente no código.
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDyl5g7nqsEqkf-wr0AD_S9MRSHba-MhM",
+            authDomain: "gestao-de-monitoracao.firebaseapp.com",
+            projectId: "gestao-de-monitoracao",
+            storageBucket: "gestao-de-monitoracao.appspot.com", // Corrigido para .appspot.com
+            messagingSenderId: "388274487667",
+            appId: "1:388274487667:web:69372989f510f237e90506"
+        };
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -399,29 +409,20 @@
         onAuthStateChanged(auth, user => {
             if (user) {
                 userId = user.uid;
-                const collectionPath = `/artifacts/${appId}/users/${userId}/documents`;
-                documentsCollection = collection(db, collectionPath);
+                // Para GitHub Pages, todos os dados são públicos.
+                // Se precisasse de isolamento, seria necessário um sistema de login completo.
+                documentsCollection = collection(db, 'documents');
                 listenToDocuments();
                 setupFilters();
             } else {
-                const performSignIn = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Falha na autenticação:", error);
-                        showToast("Erro de autenticação. Não foi possível conectar.", 'error');
-                        loadingScreen.classList.add('hidden');
-                    }
-                };
-                performSignIn();
+                 signInAnonymously(auth).catch(error => {
+                    console.error("Falha na autenticação anónima:", error);
+                    showToast("Erro de autenticação. Não foi possível conectar.", 'error');
+                    loadingScreen.classList.add('hidden');
+                 });
             }
         });
         
-        // CORREÇÃO: Função para renderizar pendências no formulário
         function renderStagedPendencies() {
             pendenciesToAddList.innerHTML = stagedPendencies.length === 0 
                 ? `<p class="text-sm text-gray-400 text-center italic">Nenhuma pendência adicionada.</p>`
@@ -432,7 +433,6 @@
                     </div>`).join('');
         }
 
-        // CORREÇÃO: Listeners para adicionar e remover pendências do formulário
         addPendencyToFormBtn.addEventListener('click', () => {
             const text = newPendencyTextInput.value.trim();
             if (text) {
@@ -458,7 +458,6 @@
             }
         });
 
-        // CORREÇÃO: Listener de submissão do formulário de adição
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!documentsCollection) {
@@ -475,7 +474,7 @@
                 const fileData = [];
                 if (files.length > 0) {
                     const uploadPromises = Array.from(files).map(file => {
-                        const filePath = `${userId}/files/${Date.now()}_${file.name}`;
+                        const filePath = `files/${Date.now()}_${file.name}`; // Caminho público
                         const storageRef = ref(storage, filePath);
                         return uploadBytes(storageRef, file).then(snapshot => 
                             getDownloadURL(snapshot.ref).then(url => ({ name: file.name, url, path: filePath }))
@@ -694,7 +693,6 @@
             });
         }
         
-        // CORREÇÃO: Listeners de eventos na lista de documentos (delegação)
         document.getElementById('documents-list').addEventListener('click', async (e) => {
             const deleteBtn = e.target.closest('.delete-doc-btn');
             if (deleteBtn) {
@@ -757,7 +755,7 @@
                 try {
                     target.classList.add('hidden');
                     spinner.classList.remove('hidden');
-                    const filePath = `${userId}/evidence/${docId}/${Date.now()}_${file.name}`;
+                    const filePath = `evidence/${docId}/${Date.now()}_${file.name}`; // Caminho público
                     const storageRef = ref(storage, filePath);
                     const snapshot = await uploadBytes(storageRef, file);
                     const downloadURL = await getDownloadURL(snapshot.ref);
