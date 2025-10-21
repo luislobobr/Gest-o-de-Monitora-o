@@ -246,15 +246,11 @@
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
         
-        // CORREÇÃO PARA GITHUB PAGES:
-        // As credenciais do Firebase são colocadas diretamente aqui.
-        // Em um ambiente de produção seguro ou colaborativo, estas chaves
-        // não deveriam estar expostas diretamente no código.
         const firebaseConfig = {
             apiKey: "AIzaSyCDyl5g7nqsEqkf-wr0AD_S9MRSHba-MhM",
             authDomain: "gestao-de-monitoracao.firebaseapp.com",
             projectId: "gestao-de-monitoracao",
-            storageBucket: "gestao-de-monitoracao.appspot.com", // Corrigido para .appspot.com
+            storageBucket: "gestao-de-monitoracao.firebasestorage.app", // Revertido para o valor original
             messagingSenderId: "388274487667",
             appId: "1:388274487667:web:69372989f510f237e90506"
         };
@@ -409,8 +405,6 @@
         onAuthStateChanged(auth, user => {
             if (user) {
                 userId = user.uid;
-                // Para GitHub Pages, todos os dados são públicos.
-                // Se precisasse de isolamento, seria necessário um sistema de login completo.
                 documentsCollection = collection(db, 'documents');
                 listenToDocuments();
                 setupFilters();
@@ -735,8 +729,13 @@
 
                 if (!isChecked && currentPendency.evidenceUrl) {
                     showConfirmationModal('Desmarcar esta pendência também removerá a evidência. Deseja continuar?', async () => {
-                        if (currentPendency.evidencePath) await deleteObject(ref(storage, currentPendency.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
-                        pendencies[pendencyIndex] = { ...currentPendency, status: 'pendente', evidenceUrl: undefined, evidencePath: undefined };
+                        if (currentPendency.evidencePath) {
+                            await deleteObject(ref(storage, currentPendency.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
+                        }
+                        const updatedPendency = { ...currentPendency, status: 'pendente' };
+                        delete updatedPendency.evidenceUrl;
+                        delete updatedPendency.evidencePath;
+                        pendencies[pendencyIndex] = updatedPendency;
                         await updateDoc(docRef, { pendencies });
                     });
                     target.checked = true; // Reverte visualmente até confirmação
