@@ -1,0 +1,199 @@
+:root {
+    --cor-principal: #4A90E2; /* Azul Corporativo Moderno */
+    --cor-principal-hover: #3A75C4; /* Azul mais escuro para hover */
+    --cor-fundo: #F8F9FA;      /* Cinza muito claro (Bootstrap) */
+    --cor-card: #FFFFFF;       /* Branco para os cards */
+    --cor-texto: #343A40;      /* Cinza escuro para texto (Bootstrap) */
+    --cor-titulo: #2c3e50;     /* Azul ardósia escuro para títulos */
+    --cor-borda: #dee2e6;      /* Cinza claro para bordas (Bootstrap) */
+    --cor-sucesso: #198754;     /* Verde para sucesso (Bootstrap 5.3) */
+    --cor-perigo: #dc3545;      /* Vermelho para perigo */
+    --cor-aviso: #ffc107;     /* Amarelo para aviso */
+    --cor-info: #0dcaf0;       /* Azul claro para info */
+    --fonte-titulo: 'Poppins', sans-serif;
+    --fonte-corpo: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--cor-fundo);
+    font-family: var(--fonte-corpo);
+    color: var(--cor-texto);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--fonte-titulo);
+    color: var(--cor-titulo);
+    font-weight: 700;
+}
+
+.container-app {
+     max-width: 1600px;
+}
+
+.card {
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    background-color: var(--cor-card);
+}
+
+.nav-tabs {
+    border-bottom: 2px solid var(--cor-borda);
+}
+
+.nav-tabs .nav-link {
+    color: var(--cor-texto);
+    border-radius: 8px 8px 0 0;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--cor-principal);
+    border-color: var(--cor-borda) var(--cor-borda) var(--cor-card);
+    border-bottom: 2px solid var(--cor-principal);
+    background-color: var(--cor-card);
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    border-color: transparent;
+    background-color: #e9ecef;
+    color: var(--cor-principal);
+}
+
+.btn-primary {
+    background-color: var(--cor-principal);
+    border-color: var(--cor-principal);
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+    padding: 0.5rem 1.25rem;
+}
+
+.btn-primary:hover {
+    background-color: var(--cor-principal-hover);
+    border-color: var(--cor-principal-hover);
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+    padding: 0.5rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--cor-principal);
+    box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
+}
+
+.table {
+    border-color: var(--cor-borda);
+    vertical-align: middle;
+}
+
+.table thead {
+     border-bottom: 2px solid var(--cor-titulo);
+}
+
+.table th {
+    font-family: var(--fonte-titulo);
+    color: var(--cor-titulo);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.table-hover > tbody > tr:hover > * {
+    background-color: #eef5fc;
+}
+
+.action-icon {
+    cursor: pointer;
+    margin: 0 6px;
+    opacity: 0.7;
+    transition: all 0.2s ease-in-out;
+    transform-origin: center;
+}
+.action-icon:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(248, 249, 250, 0.7);
+    z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+}
+.toast-container { z-index: 1100; }
+
+.badge {
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.4em 0.8em;
+}
+
+.summary-card {
+    border-left-width: 5px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+.summary-card .icon {
+    font-size: 2.5rem;
+    opacity: 0.2;
+}
+.summary-card-success { border-left-color: var(--cor-sucesso); }
+.summary-card-warning { border-left-color: var(--cor-aviso); }
+.summary-card-danger { border-left-color: var(--cor-perigo); }
+.summary-card-info { border-left-color: var(--cor-info); }
+.summary-card-primary { border-left-color: var(--cor-principal); }
+
+.form-check-presenca .form-check-input {
+    cursor: pointer;
+}
+.form-check-presenca .form-check-label {
+    cursor: pointer;
+    padding-left: 0.3em;
+}
+.aluno-presente {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+.alert-badge {
+    font-size: 0.6rem;
+    vertical-align: super;
+    margin-left: 5px;
+}
+
+/* Estilos Login */
+#login-section {
+    max-width: 400px;
+    margin: 5rem auto;
+}
+#main-app-section {
+    display: none; /* Começa escondido */
+}
+#user-info {
+    display: none; /* Começa escondido */
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 0.9rem;
+    text-align: right;
+}
+#user-info span { font-weight: bold; }
+
+/* Estilo da Logo */
+#app-logo {
+    display: block;
+    margin: 0 auto 1.5rem auto; /* Centraliza e adiciona margem abaixo */
+    max-height: 80px; /* Ajuste a altura máxima conforme necessário */
+    width: auto; /* Mantém a proporção */
+}

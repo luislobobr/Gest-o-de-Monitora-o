@@ -1,865 +1,278 @@
 <!DOCTYPE html>
-<html lang="pt-br" class=""> <!-- A classe 'dark' será adicionada aqui pelo JS -->
-
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acompanhamentos Trabalhos </title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* Estilos Base e Transições */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* bg-gray-100 */
-            color: #1f2937; /* text-gray-800 */
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .card, .modal-content {
-            background-color: #ffffff; /* bg-white */
-            transition: background-color 0.3s;
-        }
-        .progress-bar {
-            background-color: #e5e7eb; /* bg-gray-200 */
-            border-radius: 9999px;
-            overflow: hidden;
-            transition: background-color 0.3s;
-        }
-        .progress-bar-inner {
-            background-color: #22c55e; /* bg-green-500 */
-            height: 100%;
-            transition: width 0.5s ease-in-out;
-        }
-
-        /* Modo Escuro */
-        html.dark body {
-            background-color: #111827; /* dark:bg-gray-900 */
-            color: #e5e7eb; /* dark:text-gray-200 */
-        }
-        html.dark .card, html.dark .modal-content {
-            background-color: #1f2937; /* dark:bg-gray-800 */
-        }
-        html.dark .progress-bar {
-            background-color: #374151; /* dark:bg-gray-700 */
-        }
-
-        /* Estilos de Componentes */
-        .modal-overlay, .loading-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 50; transition: opacity 0.3s ease;
-        }
-        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
-        .loading-overlay { background-color: rgba(255, 255, 255, 0.8); z-index: 100; }
-        html.dark .loading-overlay { background-color: rgba(17, 24, 39, 0.8); }
-        .modal-content {
-            padding: 2rem; border-radius: 0.5rem;
-            max-width: 400px; width: 90%;
-        }
-        .pendency-checkbox:checked + label {
-            text-decoration: line-through;
-            color: #6b7280; /* text-gray-500 */
-        }
-        html.dark .pendency-checkbox:checked + label {
-            color: #9ca3af; /* dark:text-gray-400 */
-        }
-        
-        .toast {
-            position: fixed; bottom: 1.5rem; right: 1.5rem;
-            padding: 1rem 1.5rem; border-radius: 0.5rem;
-            color: white; font-weight: 500; z-index: 100;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
-            transform: translateX(calc(100% + 1.5rem));
-            transition: transform 0.5s ease-in-out;
-        }
-        .toast.show { transform: translateX(0); }
-        .toast.success { background-color: #22c55e; }
-        .toast.error { background-color: #ef4444; }
-
-        .filter-btn.active {
-            background-color: #2563eb; /* bg-blue-600 */
-            color: #ffffff;
-            border-color: #2563eb;
-        }
-        .filter-btn {
-            border: 1px solid #e5e7eb;
-            background-color: #ffffff;
-            color: #111827;
-            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-        }
-        .filter-btn:hover { background-color: #f9fafb; }
-        html.dark .filter-btn {
-            border-color: #4b5563;
-            background-color: #374151;
-            color: #e5e7eb;
-        }
-        html.dark .filter-btn:hover { background-color: #4b5563; }
-        html.dark .filter-btn.active {
-             border-color: #2563eb;
-        }
-    </style>
+    <title>Studio Carla Borges - Sistema de Gestão v3.0</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
+<body>
 
-<body class="antialiased">
-
-    <!-- Overlays -->
-    <div id="loading-screen" class="loading-overlay">
-        <i class="fas fa-spinner fa-spin fa-3x text-blue-600"></i>
-        <p class="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">A Ligar...</p>
+<div class="loading-overlay" id="initial-loading">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; --bs-spinner-border-width: 0.3rem; color: var(--cor-principal) !important;">
+        <span class="visually-hidden">Carregando...</span>
     </div>
-    <div id="confirmation-modal" class="modal-overlay hidden">
-        <div class="modal-content text-center">
-            <p id="modal-text" class="mb-6 text-lg">Tem a certeza?</p>
-            <div class="flex justify-center gap-4">
-                <button id="modal-confirm-btn" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">Confirmar</button>
-                <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition">Cancelar</button>
+</div>
+
+<div id="login-section" class="container">
+    <div class="card p-4 p-md-5">
+        <h3 class="text-center mb-4">Login - Studio Carla Borges</h3>
+        <form id="login-form">
+            <div class="mb-3">
+                <label for="login-email" class="form-label">E-mail</label>
+                <input type="email" class="form-control" id="login-email" required>
+            </div>
+            <div class="mb-3">
+                <label for="login-password" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="login-password" required>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </div>
+            <div id="login-error" class="text-danger mt-3 text-center" style="display: none;"></div>
+        </form>
+    </div>
+</div>
+
+
+<div id="main-app-section">
+    <div id="user-info" class="text-muted">
+        Logado como: <span id="user-email"></span><br>
+        <button id="logout-button" class="btn btn-sm btn-outline-secondary mt-1">Sair</button>
+    </div>
+
+    <div class="container-app mt-4 mb-5">
+        
+        <img id="app-logo" src="https://placehold.co/200x80/4A90E2/FFFFFF?text=Sua+Logo+Aqui" alt="Logomarca Studio Carla Borges" onerror="this.src='https://placehold.co/200x80/cccccc/FFFFFF?text=Logo'; this.onerror=null;">
+
+        <div class="text-center mb-5">
+            <h2 style="font-size: 2.5rem; color: var(--cor-titulo);">Studio Carla Borges</h2>
+            <p class="text-muted" style="font-size: 1.1rem;">Sistema de Gestão</p>
+        </div>
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" id="inicio-tab" data-bs-toggle="tab" data-bs-target="#inicio-pane" type="button">Início</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="financeiro-tab" data-bs-toggle="tab" data-bs-target="#financeiro-pane" type="button">Financeiro</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="caixa-tab" data-bs-toggle="tab" data-bs-target="#caixa-pane" type="button">Controle de Caixa</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="alunos-tab" data-bs-toggle="tab" data-bs-target="#alunos-pane" type="button">Alunos</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="aulas-tab" data-bs-toggle="tab" data-bs-target="#aulas-pane" type="button">Aulas</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config-pane" type="button">Configurações</button></li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            
+            <div class="tab-pane fade show active" id="inicio-pane" role="tabpanel">
+                <div class="card border-top-0 rounded-0 rounded-bottom"><div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="card-title mb-0">Programação do Dia</h5>
+                        <h6 class="mb-0" id="dia-da-semana-titulo"></h6>
+                    </div>
+                    <div id="programacao-do-dia"><p class="text-center p-5">Carregando programação...</p></div>
+                </div></div>
+            </div>
+            
+            <div class="tab-pane fade" id="financeiro-pane" role="tabpanel">
+                <div class="card border-top-0 rounded-0 rounded-bottom"><div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                        <h5 class="card-title mb-0">Dashboard Financeiro</h5>
+                        <h6 id="mes-ano-financeiro" class="text-muted fw-normal"></h6>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-lg col-md-6 mb-3"><div class="card summary-card summary-card-success h-100"><div class="card-body"><h6 class="card-subtitle text-muted text-uppercase small">Receita (Aulas)</h6><span class="h4" id="resumo-receita-aulas">R$ 0,00</span></div></div></div>
+                        <div class="col-lg col-md-6 mb-3"><div class="card summary-card summary-card-success h-100"><div class="card-body"><h6 class="card-subtitle text-muted text-uppercase small">Receita (Matrículas)</h6><span class="h4" id="resumo-receita-matriculas">R$ 0,00</span></div></div></div>
+                        <div class="col-lg col-md-6 mb-3"><div class="card summary-card summary-card-info h-100"><div class="card-body"><h6 class="card-subtitle text-muted text-uppercase small">Outras Entradas</h6><span class="h4" id="resumo-outras-entradas">R$ 0,00</span></div></div></div>
+                        <div class="col-lg col-md-6 mb-3"><div class="card summary-card summary-card-danger h-100"><div class="card-body"><h6 class="card-subtitle text-muted text-uppercase small">Total Despesas</h6><span class="h4" id="resumo-despesas">R$ 0,00</span></div></div></div>
+                        <div class="col-lg col-md-6 mb-3"><div class="card summary-card summary-card-primary h-100"><div class="card-body"><h6 class="card-subtitle text-muted text-uppercase small">Balanço do Mês</h6><span class="h4" id="resumo-balanco">R$ 0,00</span></div></div></div>
+                        <div class="col-lg col-md-6 mb-3"><div class="card summary-card summary-card-warning h-100"><div class="card-body"><h6 class="card-subtitle text-muted text-uppercase small">A Receber (Alunos) <span id="alert-badge-a-receber" class="badge bg-danger rounded-pill alert-badge" style="display: none;">!</span></h6><span class="h4" id="resumo-a-receber">R$ 0,00</span></div></div></div>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <div class="row">
+                        <div class="col-lg-6 mb-4 mb-lg-0">
+                            <h5 class="mb-3">Análise Financeira</h5>
+                            <div class="card mb-3"><div class="card-body"><p class="card-text">Selecione o período para gerar um balancete detalhado.</p><div class="row g-2 align-items-end"><div class="col"><label for="relatorio-mes">Mês</label><select id="relatorio-mes" class="form-select"></select></div><div class="col"><label for="relatorio-ano">Ano</label><select id="relatorio-ano" class="form-select"></select></div><div class="col-auto"><button class="btn btn-primary" id="btn-gerar-balancete">Gerar PDF</button></div></div></div></div>
+                            <div class="card"><div class="card-body"><p class="card-text">Gere um relatório focado nos alunos com pagamentos pendentes.</p><button class="btn btn-warning" id="btn-gerar-relatorio-inadimplencia">Relatório de Inadimplência (PDF)</button></div></div>
+                        </div>
+                        <div class="col-lg-6">
+                            <h5 class="mb-3">Previsão de Receita (Alunos)</h5>
+                            <div class="table-responsive"><table class="table table-sm table-bordered"><thead class="table-light"><tr><th>Mês</th><th>Previsão</th></tr></thead><tbody id="tabela-previsao"></tbody></table></div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-5">
+
+                    <h5 class="card-title mb-4">Gestão de Mensalidades</h5>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                        <div class="btn-group" role="group" id="filtros-financeiro"><button type="button" class="btn btn-outline-secondary active" data-filtro="todos">Todos</button><button type="button" class="btn btn-outline-secondary" data-filtro="pendente">Pendentes</button><button type="button" class="btn btn-outline-secondary" data-filtro="pago">Pagos</button><button type="button" class="btn btn-outline-secondary" data-filtro="atrasado">Atrasados</button></div>
+                        <div><button class="btn btn-primary btn-sm" id="btn-gerar-mensalidades">Verificar e Gerar Mensalidades</button></div>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Aluno / Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="tabela-financeiro"></tbody></table></div>
+
+                </div></div>
+            </div>
+            
+            <div class="tab-pane fade" id="caixa-pane" role="tabpanel">
+                 <div class="card border-top-0 rounded-0 rounded-bottom"><div class="card-body p-4 p-md-5">
+                    <h5 class="card-title mb-4">Lançamentos de Caixa</h5>
+                    <form id="form-caixa" class="row g-3 align-items-end mb-4">
+                        <input type="hidden" id="caixa-id">
+                        <div class="col-sm-3"><label class="form-label">Descrição</label><input type="text" id="caixa-descricao" class="form-control" required></div>
+                        <div class="col-sm-2"><label class="form-label">Valor (R$)</label><input type="number" step="0.01" id="caixa-valor" class="form-control" required min="0.01"></div>
+                        <div class="col-sm-2"><label class="form-label">Data</label><input type="date" id="caixa-data" class="form-control" required></div>
+                        <div class="col-sm-2"><label class="form-label">Categoria</label><input type="text" id="caixa-categoria" class="form-control" list="categorias-list" placeholder="Ex: Aluguel, Venda"></div>
+                        <div class="col-sm-1"><label class="form-label">Tipo</label><select id="caixa-tipo" class="form-select" required><option value="entrada">Entrada</option><option value="saida">Saída</option></select></div>
+                        <div class="col-sm-2"><button type="submit" class="btn btn-primary w-100">Lançar</button></div>
+                        <div class="col-12"><button type="button" id="btn-cancelar-edicao-caixa" class="btn btn-secondary" style="display: none;">Cancelar Edição</button></div>
+                    </form>
+                    <hr class="my-4">
+                    <h6 class="mb-3">Histórico de Lançamentos</h6>
+                    <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Descrição</th><th>Categoria</th><th>Data</th><th>Tipo</th><th>Valor</th><th>Ações</th></tr></thead><tbody id="tabela-caixa"></tbody></table></div>
+                    <datalist id="categorias-list"><option value="Aluguel"><option value="Água"><option value="Luz"><option value="Internet"><option value="Material de Limpeza"><option value="Material de Escritório"><option value="Venda de Produto"><option value="Aula Avulsa"><option value="Outros"></datalist>
+                </div></div>
+            </div>
+
+            <div class="tab-pane fade" id="alunos-pane" role="tabpanel">
+                <div class="card border-top-0 rounded-0 rounded-bottom"><div class="card-body p-4 p-md-5">
+                    <h5 class="card-title mb-4" id="alunos-card-title">Cadastro de Alunos</h5>
+                    <form id="form-aluno">
+                        <input type="hidden" id="aluno-id">
+                        <div class="row">
+                            <div class="col-md-5 mb-3"><label class="form-label">Nome Completo</label><input type="text" id="aluno-nome" class="form-control" required></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Telefone</label><input type="tel" id="aluno-telefone" class="form-control" placeholder="(31) 99999-9999" pattern="\([0-9]{2}\) [0-9]{5}-[0-9]{4}" title="Formato: (XX) XXXXX-XXXX"></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Dia Vencimento</label><input type="number" id="aluno-dia-vencimento" class="form-control" min="1" max="31" value="10" required></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3"><label class="form-label">Turma</label><select id="aluno-turma" class="form-select" required><option selected disabled value="">Selecione...</option></select></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Plano de Pagamento</label><select id="aluno-plano" class="form-select" required><option selected disabled value="">Selecione...</option></select></div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Bolsa de Estudo</label><select id="aluno-bolsa" class="form-select"><option value="0" selected>Não é bolsista</option><option value="10">Bolsista 10%</option><option value="20">Bolsista 20%</option><option value="50">Bolsista 50%</option><option value="100">Bolsista 100%</option></select></div>
+                        </div>
+                        <div class="row align-items-end">
+                            <div class="col-md-4 mb-3"><label class="form-label">Valor da Matrícula (R$)</label><input type="number" step="0.01" id="aluno-matricula-valor" class="form-control" value="100.00" min="0"></div>
+                            <div class="col-md-4 mb-3"><div class="form-check pt-4"><input class="form-check-input" type="checkbox" id="aluno-matricula-isento"><label class="form-check-label" for="aluno-matricula-isento">Isento de Matrícula</label></div></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Aluno</button>
+                        <button type="button" class="btn btn-secondary" id="btn-cancelar-edicao-aluno" style="display: none;">Cancelar</button>
+                    </form>
+                    <hr class="my-4">
+                    <h6 class="mb-3">Alunos Cadastrados</h6>
+                    <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Nome</th><th>Plano</th><th>Bolsa</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody id="tabela-alunos"></tbody></table></div>
+                </div></div>
+            </div>
+
+            <div class="tab-pane fade" id="aulas-pane" role="tabpanel">
+                <div class="card border-top-0 rounded-0 rounded-bottom"><div class="card-body p-4 p-md-5">
+                    <h5 class="card-title mb-4">Cadastro de Aulas e Horários</h5>
+                    <form id="form-aula">
+                        <input type="hidden" id="aula-id">
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Nome da Turma</label><input type="text" id="aula-nome" class="form-control" required></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Horário</label><input type="time" id="aula-horario" class="form-control" required></div>
+                            <div class="col-md-3 mb-3"><label class="form-label">Vagas</label><input type="number" id="aula-vagas" class="form-control" min="1" placeholder="Ilimitado"></div>
+                        </div>
+                        <div class="mb-3"><label class="form-label d-block">Dias da Semana</label>
+                            <div id="aula-dias-semana">
+                                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="seg" value="seg"><label class="form-check-label" for="seg">Seg</label></div>
+                                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="ter" value="ter"><label class="form-check-label" for="ter">Ter</label></div>
+                                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="qua" value="qua"><label class="form-check-label" for="qua">Qua</label></div>
+                                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="qui" value="qui"><label class="form-check-label" for="qui">Qui</label></div>
+                                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="sex" value="sex"><label class="form-check-label" for="sex">Sex</label></div>
+                                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="sab" value="sab"><label class="form-check-label" for="sab">Sáb</label></div>
+                                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" id="dom" value="dom"><label class="form-check-label" for="dom">Dom</label></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Aula</button>
+                        <button type="button" class="btn btn-secondary" id="btn-cancelar-edicao-aula" style="display: none;">Cancelar</button>
+                    </form>
+                    <hr class="my-4"><h6>Aulas Cadastradas</h6>
+                    <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Turma</th><th>Horário</th><th>Dias</th><th>Vagas</th><th>Ações</th></tr></thead><tbody id="tabela-aulas"></tbody></table></div>
+                </div></div>
+            </div>
+            
+            <div class="tab-pane fade" id="config-pane" role="tabpanel">
+                <div class="card border-top-0 rounded-0 rounded-bottom"><div class="card-body p-4 p-md-5">
+                  <div class="row">
+                      <div class="col-lg-8 mb-4 mb-lg-0">
+                          <h5 class="card-title mb-3">Planos de Pagamento</h5>
+                          <form id="form-plano" class="row g-2 align-items-end mb-3">
+                              <input type="hidden" id="plano-id">
+                              <div class="col-sm-4"><label class="form-label">Nome do Plano</label><input type="text" id="plano-nome" class="form-control" required></div>
+                              <div class="col-sm-2"><label class="form-label">Valor Parcela</label><input type="number" step="0.01" id="plano-valor-parcela" class="form-control" min="0.01" required></div>
+                              <div class="col-sm-2"><label class="form-label">Qtd. Parcelas</label><input type="number" id="plano-meses" class="form-control" required value="1" min="1"></div>
+                              <div class="col-sm-2"><label class="form-label">Desconto (%)</label><input type="number" step="0.01" id="plano-desconto" class="form-control" placeholder="0" min="0" max="100"></div>
+                              <div class="col-sm-2"><button type="submit" class="btn btn-primary w-100">Salvar</button></div>
+                              <div class="col-sm-4 mt-3"><label class="form-label">Valor Total (c/ desc.)</label><input type="text" id="plano-valor-total-calculado" class="form-control" readonly></div>
+                              <div class="col-12 mt-2"><button type="button" id="btn-cancelar-edicao-plano" class="btn btn-secondary" style="display:none;">Cancelar Edição</button></div>
+                          </form>
+                          <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Nome</th><th>Valor Parcela</th><th>Parcelas</th><th>Desconto</th><th>Total</th><th>Ações</th></tr></thead><tbody id="tabela-planos"></tbody></table></div>
+                      </div>
+                      <div class="col-lg-4">
+                          <h5 class="card-title mb-3">Formas de Pagamento</h5>
+                          <form id="form-formas-pagamento" class="row g-2 align-items-end mb-3">
+                              <input type="hidden" id="forma-pagamento-id">
+                              <div class="col"><label class="form-label">Nome da Forma</label><input type="text" id="forma-pagamento-nome" class="form-control" required></div>
+                              <div class="col-auto"><button type="submit" class="btn btn-primary w-100">Salvar</button></div>
+                              <div class="col-auto"><button type="button" id="btn-cancelar-edicao-forma-pagamento" class="btn btn-secondary w-100" style="display:none;">Cancelar</button></div>
+                          </form>
+                          <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Nome</th><th>Ações</th></tr></thead><tbody id="tabela-formas-pagamento"></tbody></table></div>
+                      </div>
+                  </div>
+                </div></div>
             </div>
         </div>
     </div>
-    <div id="edit-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 class="text-xl font-semibold mb-6 text-left text-gray-800 dark:text-gray-100">Editar Item</h3>
-            <form id="edit-document-form" class="space-y-4">
-                 <div>
-                    <label for="editDocName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">Nome do Item / Local</label>
-                    <input type="text" id="editDocName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                </div>
-                <div>
-                    <label for="editDocResponsible" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 text-left">Trecho</label>
-                    <select id="editDocResponsible" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                        <option value="TRECHO 1">TRECHO 1</option>
-                        <option value="TRECHO 2">TRECHO 2</option>
-                        <option value="TRECHO 3">TRECHO 3</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <button type="button" id="edit-modal-cancel-btn" class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition">Cancelar</button>
-                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">Salvar</button>
-                </div>
-            </form>
-        </div>
+</div>
+
+
+<div class="modal fade" id="modal-pagamento" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Lançar Pagamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <form id="form-pagamento-lancamento">
+        <input type="hidden" id="pagamento-mensalidade-id">
+        <p>Lançamento para: <strong id="pagamento-aluno-nome"></strong></p>
+        <div class="mb-3"><label class="form-label">Valor a Pagar (R$)</label><input type="number" step="0.01" class="form-control" id="pagamento-valor" required min="0.01"></div>
+        <div class="mb-3"><label class="form-label">Desconto (R$)</label><input type="number" step="0.01" class="form-control" id="pagamento-desconto" placeholder="0.00" min="0"></div>
+        <div class="mb-3"><label class="form-label">Valor Final (R$)</label><input type="number" step="0.01" class="form-control" id="pagamento-valor-final" readonly></div>
+        <div class="mb-3"><label class="form-label">Data do Pagamento</label><input type="date" class="form-control" id="pagamento-data" required></div>
+        <div class="mb-3"><label class="form-label">Forma de Pagamento</label><select class="form-select" id="pagamento-forma" required></select></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar Pagamento</button></div>
+      </form>
     </div>
-    <div id="toast-container"></div>
+  </div></div>
+</div>
 
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="confirmationModalTitle">Confirmar Ação</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><p id="confirmationModalBody">Você tem certeza que deseja prosseguir?</p></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-danger" id="confirmActionBtn">Confirmar</button></div>
+    </div></div>
+</div>
 
-    <div class="container mx-auto p-4 md:p-8">
-        <div class="lg:grid lg:grid-cols-12 lg:gap-8">
-            
-            <aside class="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-8 self-start mb-8 lg:mb-0">
-                <div class="card p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold text-gray-700 dark:text-gray-200">Registar Item</h2>
-                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors">
-                            <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
-                            <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
-                        </button>
-                    </div>
-                    <form id="add-document-form" class="space-y-6">
-                        <div class="grid grid-cols-1 gap-4">
-                            <div>
-                                <label for="docName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Item / Local</label>
-                                <input type="text" id="docName" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                            </div>
-                            <div>
-                                <label for="docResponsible" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Trecho</label>
-                                <select id="docResponsible" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" required>
-                                    <option value="" disabled selected>Selecione um trecho</option>
-                                    <option value="TRECHO 1">TRECHO 1</option>
-                                    <option value="TRECHO 2">TRECHO 2</option>
-                                    <option value="TRECHO 3">TRECHO 3</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pendências</label>
-                             <div class="flex space-x-2 mb-2">
-                                 <input type="text" id="new-pendency-text" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors" placeholder="Descreva a pendência...">
-                                 <button type="button" id="add-pendency-to-form-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition whitespace-nowrap transition-colors">Adicionar +</button>
-                             </div>
-                             <div id="pendencies-to-add-list" class="space-y-2 mt-3"></div>
-                        </div>
-                        <div>
-                            <label for="docFiles" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Anexar Ficheiros (opcional)</label>
-                            <input type="file" id="docFiles" multiple class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-300 hover:file:bg-blue-100 dark:hover:file:bg-gray-600 transition-colors">
-                        </div>
-                        <div class="text-right pt-4 border-t border-gray-200 dark:border-gray-700 transition-colors">
-                            <button type="submit" id="submit-button" class="inline-flex items-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                <span id="button-text">Registar Item</span>
-                                <i id="button-spinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </aside>
-
-            <!-- Conteúdo Principal -->
-            <main class="lg:col-span-8 xl:col-span-9">
-                <header class="text-center mb-10">
-                    <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100">Acompanhamentos Trabalhos </h1>
-                    <p class="text-lg text-gray-600 dark:text-gray-400 mt-2">Plataforma para acompanhamento de pendências.</p>
-                </header>
-
-                <div class="card p-6 mb-8">
-                    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Progresso Geral</h2>
-                    <div class="flex items-center">
-                        <div class="w-full progress-bar h-4 mr-4">
-                            <div id="summary-progress-bar" class="progress-bar-inner" style="width: 0%;"></div>
-                        </div>
-                        <span id="summary-progress-text" class="text-lg font-bold text-gray-800 dark:text-gray-200">0%</span>
-                    </div>
-                    <p id="summary-details-text" class="text-sm text-gray-500 dark:text-gray-400 mt-2">0 de 0 pendências concluídas</p>
-                </div>
-
-                <div class="card p-4 mb-8">
-                    <div class="flex flex-col md:flex-row gap-4 items-center">
-                        <div class="w-full md:w-auto">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Filtrar por Trecho:</span>
-                            <div id="filter-container" class="inline-flex rounded-lg shadow-sm" role="group"></div>
-                        </div>
-                        <div class="relative w-full md:w-1/2 lg:w-1/3">
-                            <input type="search" id="search-input" placeholder="Pesquisar por nome..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fas fa-search text-gray-400"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="documents-container">
-                     <div id="documents-list" class="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-8"></div>
-                     <div id="empty-state" class="hidden text-center py-16">
-                         <i class="fas fa-folder-open fa-4x text-gray-300"></i>
-                         <h3 class="mt-4 text-xl font-semibold text-gray-700 dark:text-gray-200">Nenhum item encontrado</h3>
-                         <p class="mt-1 text-gray-500 dark:text-gray-400">Tente ajustar os seus filtros ou adicione um novo item.</p>
-                     </div>
-                     <div id="pagination-controls" class="flex justify-center items-center mt-10 space-x-4"></div>
-                </div>
-            </main>
-        </div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header"><svg class="rounded me-2" width="20" height="20" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false"><rect width="100%" height="100%" fill="#007aff"></rect></svg><strong class="me-auto" id="toastTitle">Notificação</strong><button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button></div>
+        <div class="toast-body" id="toastBody"></div>
     </div>
+</div>
 
-    <!-- Módulo Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyCDyl5g7nqsEqkf-wr0AD_S9MRSHba-MhM",
-            authDomain: "gestao-de-monitoracao.firebaseapp.com",
-            projectId: "gestao-de-monitoracao",
-            storageBucket: "gestao-de-monitoracao.firebasestorage.app",
-            messagingSenderId: "388274487667",
-            appId: "1:388274487667:web:69372989f510f237e90506"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-        
-        let userId = null;
-        let documentsCollection = null;
-        let stagedPendencies = [];
-        let allDocuments = [];
-        let currentPage = 1;
-        let currentFilter = 'Todos';
-        let searchTerm = '';
-        let currentlyEditingDocId = null;
-        const itemsPerPage = 6;
-        const TRECHOS = ['Todos', 'TRECHO 1', 'TRECHO 2', 'TRECHO 3'];
 
-        const loadingScreen = document.getElementById('loading-screen');
-        const form = document.getElementById('add-document-form');
-        const submitButton = document.getElementById('submit-button');
-        const addPendencyToFormBtn = document.getElementById('add-pendency-to-form-btn');
-        const newPendencyTextInput = document.getElementById('new-pendency-text');
-        const pendenciesToAddList = document.getElementById('pendencies-to-add-list');
-        const paginationControls = document.getElementById('pagination-controls');
-        const filterContainer = document.getElementById('filter-container');
-        const searchInput = document.getElementById('search-input');
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const darkIcon = document.getElementById('theme-toggle-dark-icon');
-        const lightIcon = document.getElementById('theme-toggle-light-icon');
-        const editModal = document.getElementById('edit-modal');
-        const editForm = document.getElementById('edit-document-form');
-        const editModalCancelBtn = document.getElementById('edit-modal-cancel-btn');
-        
-        function applyTheme(isDark) {
-            document.documentElement.classList.toggle('dark', isDark);
-            darkIcon.classList.toggle('hidden', !isDark);
-            lightIcon.classList.toggle('hidden', isDark);
-        }
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
-        themeToggleBtn.addEventListener('click', () => {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            applyTheme(isDark);
-        });
+<script type="module" src="app.js"></script>
 
-        applyTheme(localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches));
-
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.getElementById('toast-container').appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 100);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
-
-        function showConfirmationModal(text, onConfirm) {
-            const modal = document.getElementById('confirmation-modal');
-            const confirmBtn = document.getElementById('modal-confirm-btn');
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-            document.getElementById('modal-text').textContent = text;
-            modal.classList.remove('hidden');
-
-            const confirmHandler = () => { onConfirm(); closeModal(); };
-            const cancelHandler = () => closeModal();
-            
-            const closeModal = () => {
-                modal.classList.add('hidden');
-                confirmBtn.removeEventListener('click', confirmHandler);
-                cancelBtn.removeEventListener('click', cancelHandler);
-            }
-
-            confirmBtn.addEventListener('click', confirmHandler, { once: true });
-            cancelBtn.addEventListener('click', cancelHandler, { once: true });
-        }
-        
-        function showLoadingButton(isSending) {
-            const buttonText = document.getElementById('button-text');
-            const buttonSpinner = document.getElementById('button-spinner');
-            buttonText.textContent = isSending ? "A Enviar..." : "Registar Item";
-            buttonSpinner.classList.toggle('hidden', !isSending);
-            submitButton.disabled = isSending;
-        }
-
-        function openEditModal(doc) {
-            currentlyEditingDocId = doc.id;
-            document.getElementById('editDocName').value = doc.data.name;
-            document.getElementById('editDocResponsible').value = doc.data.responsible;
-            editModal.classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            currentlyEditingDocId = null;
-            editModal.classList.add('hidden');
-            editForm.reset();
-        }
-
-        editForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentlyEditingDocId) return;
-
-            const updatedData = {
-                name: document.getElementById('editDocName').value,
-                responsible: document.getElementById('editDocResponsible').value,
-            };
-
-            const docRef = doc(db, documentsCollection.path, currentlyEditingDocId);
-            try {
-                await updateDoc(docRef, updatedData);
-                showToast('Item atualizado com sucesso!', 'success');
-                closeEditModal();
-            } catch (error) {
-                console.error("Erro ao atualizar o item:", error);
-                showToast('Falha ao atualizar o item.', 'error');
-            }
-        });
-        editModalCancelBtn.addEventListener('click', closeEditModal);
-
-        function setupFilters() {
-            filterContainer.innerHTML = TRECHOS.map((trecho, index) => `
-                <button type="button" class="filter-btn px-4 py-2 text-sm font-medium
-                    ${index === 0 ? 'rounded-l-lg' : ''} 
-                    ${index === TRECHOS.length - 1 ? 'rounded-r-lg' : 'border-b border-t border-r-0'}
-                    ${trecho === 'Todos' ? 'active' : ''}" data-filter="${trecho}">
-                    ${trecho}
-                </button>`).join('');
-            
-            filterContainer.addEventListener('click', (e) => {
-                const button = e.target.closest('.filter-btn');
-                if (button) {
-                    currentFilter = button.dataset.filter;
-                    currentPage = 1;
-                    filterContainer.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                    button.classList.add('active');
-                    updateView();
-                }
-            });
-
-            searchInput.addEventListener('input', () => {
-                searchTerm = searchInput.value.toLowerCase();
-                currentPage = 1;
-                updateView();
-            });
-        }
-        
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                userId = user.uid;
-                documentsCollection = collection(db, 'documents');
-                listenToDocuments();
-                setupFilters();
-            } else {
-                 signInAnonymously(auth).catch(error => {
-                    console.error("Falha na autenticação anónima:", error);
-                    showToast("Erro de autenticação. Não foi possível conectar.", 'error');
-                    loadingScreen.classList.add('hidden');
-                 });
-            }
-        });
-        
-        function renderStagedPendencies() {
-            pendenciesToAddList.innerHTML = stagedPendencies.length === 0 
-                ? `<p class="text-sm text-gray-400 text-center italic">Nenhuma pendência adicionada.</p>`
-                : stagedPendencies.map((text, index) => `
-                    <div class="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-700 rounded-md text-sm">
-                        <span>${text}</span>
-                        <button type="button" data-index="${index}" class="remove-staged-pendency-btn text-gray-400 hover:text-red-500 transition">&times;</button>
-                    </div>`).join('');
-        }
-
-        addPendencyToFormBtn.addEventListener('click', () => {
-            const text = newPendencyTextInput.value.trim();
-            if (text) {
-                stagedPendencies.push(text);
-                newPendencyTextInput.value = '';
-                renderStagedPendencies();
-            }
-            newPendencyTextInput.focus();
-        });
-
-        newPendencyTextInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addPendencyToFormBtn.click();
-            }
-        });
-
-        pendenciesToAddList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-staged-pendency-btn')) {
-                const index = parseInt(e.target.dataset.index, 10);
-                stagedPendencies.splice(index, 1);
-                renderStagedPendencies();
-            }
-        });
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!documentsCollection) {
-                showToast('A aplicação ainda está a inicializar. Tente novamente.', 'error');
-                return;
-            }
-
-            showLoadingButton(true);
-            const docName = document.getElementById('docName').value;
-            const docResponsible = document.getElementById('docResponsible').value;
-            const files = document.getElementById('docFiles').files;
-            const pendenciesData = stagedPendencies.map(text => ({ text, status: 'pendente' }));
-            try {
-                const fileData = [];
-                if (files.length > 0) {
-                    const uploadPromises = Array.from(files).map(file => {
-                        const filePath = `files/${Date.now()}_${file.name}`;
-                        const storageRef = ref(storage, filePath);
-                        return uploadBytes(storageRef, file).then(snapshot => 
-                            getDownloadURL(snapshot.ref).then(url => ({ name: file.name, url, path: filePath }))
-                        );
-                    });
-                    fileData.push(...await Promise.all(uploadPromises));
-                }
-                await addDoc(documentsCollection, { name: docName, responsible: docResponsible, createdAt: new Date(), pendencies: pendenciesData, files: fileData });
-                form.reset();
-                stagedPendencies = [];
-                renderStagedPendencies();
-                showToast('Item registado com sucesso!', 'success');
-            } catch (error) {
-                console.error("ERRO DE UPLOAD/REGISTO:", error);
-                showToast(`Ocorreu um erro: ${error.message}`, 'error');
-            } finally {
-                showLoadingButton(false);
-            }
-        });
-
-        function renderDocuments(documentsToRender) {
-            const listElement = document.getElementById('documents-list');
-            const emptyState = document.getElementById('empty-state');
-            listElement.innerHTML = ''; 
-
-            emptyState.classList.toggle('hidden', documentsToRender.length > 0);
-            listElement.classList.toggle('hidden', documentsToRender.length === 0);
-            
-            documentsToRender.forEach(docData => {
-                const card = createDocumentCard(docData);
-                listElement.appendChild(card);
-            });
-            
-            updateSummary();
-        }
-
-        function createDocumentCard(docData) {
-            const { id, data } = docData;
-            const card = document.createElement('div');
-            card.className = 'card p-6 flex flex-col';
-            card.setAttribute('data-id', id);
-
-            const cardContent = document.createElement('div');
-            cardContent.className = 'flex-grow';
-
-            cardContent.appendChild(createCardHeader(docData));
-            cardContent.appendChild(createCardProgress(data));
-            cardContent.appendChild(createCardSection('Ficheiros', createFilesList(data.files)));
-            cardContent.appendChild(createCardSection('Pendências', createPendenciesList(id, data.pendencies)));
-            
-            card.appendChild(cardContent);
-            return card;
-        }
-
-        function createCardHeader(docData) {
-            const { data } = docData;
-            const trechoColors = { 'TRECHO 1': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300', 'TRECHO 2': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300', 'TRECHO 3': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' };
-            const trechoColor = trechoColors[data.responsible] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-            
-            const header = document.createElement('div');
-            header.className = 'flex justify-between items-start mb-2';
-
-            const infoDiv = document.createElement('div');
-            const title = document.createElement('h3');
-            title.className = 'text-xl font-bold text-gray-800 dark:text-gray-100';
-            title.textContent = data.name;
-
-            const metaDiv = document.createElement('div');
-            metaDiv.className = 'flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1';
-            metaDiv.innerHTML = `
-                <span class="font-medium px-2 py-0.5 rounded-full ${trechoColor}">${data.responsible}</span>
-                <span>|</span>
-                <span>${data.createdAt.toDate().toLocaleDateString('pt-BR')}</span>`;
-            
-            infoDiv.append(title, metaDiv);
-
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'flex items-center gap-3';
-            
-            const editBtn = document.createElement('button');
-            editBtn.className = 'edit-doc-btn text-gray-400 hover:text-blue-600 transition';
-            editBtn.innerHTML = '<i class="fas fa-pencil-alt fa-lg"></i>';
-            editBtn.onclick = () => openEditModal(docData);
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-doc-btn text-gray-400 hover:text-red-600 transition';
-            deleteBtn.innerHTML = '<i class="fas fa-trash-alt fa-lg"></i>';
-
-            actionsDiv.append(editBtn, deleteBtn);
-            header.append(infoDiv, actionsDiv);
-            return header;
-        }
-
-        function createCardProgress(data) {
-            const cardTotal = data.pendencies?.length || 0;
-            const cardCompleted = data.pendencies?.filter(p => p.status === 'concluido').length || 0;
-            const cardPercentage = cardTotal > 0 ? (cardCompleted / cardTotal) * 100 : 0;
-            
-            const container = document.createElement('div');
-            container.className = 'mb-4';
-            container.innerHTML = `
-                <div class="progress-bar h-2 w-full"><div class="progress-bar-inner" style="width: ${cardPercentage}%;"></div></div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">${cardCompleted} de ${cardTotal} concluídas</p>`;
-            return container;
-        }
-
-        function createCardSection(title, contentElement) {
-            const section = document.createElement('div');
-            section.className = 'mb-6';
-            section.innerHTML = `<h4 class="font-semibold text-gray-700 dark:text-gray-200 mb-2 border-b dark:border-gray-700 pb-1">${title}</h4>`;
-            section.appendChild(contentElement);
-            return section;
-        }
-
-        function createFilesList(files) {
-            const container = document.createElement('div');
-            container.className = 'space-y-1';
-            if (!files || files.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhum ficheiro anexado.</p>';
-            } else {
-                files.forEach(file => {
-                    const link = document.createElement('a');
-                    link.href = file.url;
-                    link.target = '_blank';
-                    link.className = 'flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm p-1 rounded transition group';
-                    link.innerHTML = `<i class="fas fa-file-download mr-2 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i><span>${file.name}</span>`;
-                    container.appendChild(link);
-                });
-            }
-            return container;
-        }
-
-        function createPendenciesList(docId, pendencies) {
-            const container = document.createElement('div');
-            container.className = 'pendencies-list';
-            if (pendencies && pendencies.length > 0) {
-                pendencies.forEach((pend, index) => {
-                    const isConcluido = pend.status === 'concluido';
-                    const evidenceHtml = pend.evidenceUrl
-                        ? `<a href="${pend.evidenceUrl}" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center group"><i class="fas fa-camera mr-1 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"></i> Ver Evidência</a>`
-                        : `<input type="file" accept="image/*" class="evidence-upload-input w-full text-xs text-gray-500 dark:text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-gray-700 file:text-blue-700 dark:file:text-gray-300 hover:file:bg-blue-100 dark:hover:file:bg-gray-600" data-pendency-index="${index}">`;
-                    
-                    const item = document.createElement('div');
-                    item.className = 'pendency-item py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0';
-                    item.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center flex-grow">
-                                <input type="checkbox" id="pendency-${docId}-${index}" class="pendency-checkbox h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-gray-100 dark:bg-gray-900" data-pendency-index="${index}" ${isConcluido ? 'checked' : ''}>
-                                <label for="pendency-${docId}-${index}" class="ml-3 text-sm text-gray-800 dark:text-gray-300 break-all">${pend.text}</label>
-                            </div>
-                            <button class="edit-pendency-btn text-gray-400 hover:text-blue-600 transition ml-2 px-2" data-pendency-index="${index}"><i class="fas fa-pencil-alt"></i></button>
-                        </div>
-                        <div class="evidence-section pl-7 pt-2 space-y-1 ${isConcluido ? '' : 'hidden'}">
-                            ${evidenceHtml}
-                            <div class="evidence-spinner hidden flex items-center"><i class="fas fa-spinner fa-spin text-blue-600"></i><span class="text-xs ml-2 text-gray-500 dark:text-gray-400">A Enviar...</span></div>
-                        </div>`;
-                    container.appendChild(item);
-                });
-            } else {
-                 container.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Nenhuma pendência registada.</p>';
-            }
-
-            const addFormContainer = document.createElement('div');
-            addFormContainer.className = 'mt-4 pt-3 border-t dark:border-gray-700 flex items-center gap-2';
-            addFormContainer.innerHTML = `
-                <input type="text" class="add-pendency-input w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Adicionar nova pendência...">
-                <button class="add-pendency-btn px-4 py-1.5 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition text-sm whitespace-nowrap">Adicionar +</button>
-            `;
-            container.appendChild(addFormContainer);
-
-            return container;
-        }
-
-        function updateSummary() {
-            let totalPendencies = allDocuments.reduce((acc, doc) => acc + (doc.data.pendencies?.length || 0), 0);
-            let completedPendencies = allDocuments.reduce((acc, doc) => acc + (doc.data.pendencies?.filter(p => p.status === 'concluido').length || 0), 0);
-
-            const overallPercentage = totalPendencies > 0 ? (completedPendencies / totalPendencies) * 100 : 0;
-            document.getElementById('summary-progress-bar').style.width = `${overallPercentage}%`;
-            document.getElementById('summary-progress-text').textContent = `${Math.round(overallPercentage)}%`;
-            document.getElementById('summary-details-text').textContent = `${completedPendencies} de ${totalPendencies} pendências concluídas`;
-        }
-        
-        function renderPaginationControls(filteredDocs) {
-            paginationControls.innerHTML = '';
-            const totalPages = Math.ceil(filteredDocs.length / itemsPerPage);
-
-            if (totalPages <= 1) return;
-
-            paginationControls.innerHTML = `
-                <button id="prev-page-btn" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
-                <span class="text-sm text-gray-700 dark:text-gray-300">Página ${currentPage} de ${totalPages}</span>
-                <button id="next-page-btn" class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">Próximo</button>
-            `;
-            document.getElementById('prev-page-btn').addEventListener('click', () => { if (currentPage > 1) { currentPage--; updateView(); } });
-            document.getElementById('next-page-btn').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; updateView(); } });
-            document.getElementById('prev-page-btn').disabled = currentPage === 1;
-            document.getElementById('next-page-btn').disabled = currentPage === totalPages;
-        }
-        
-        function updateView() {
-            let filtered = allDocuments.filter(doc => (currentFilter === 'Todos' || doc.data.responsible === currentFilter) &&
-                                                    (doc.data.name.toLowerCase().includes(searchTerm)));
-            
-            const totalPages = Math.ceil(filtered.length / itemsPerPage);
-            if (currentPage > totalPages && totalPages > 0) { currentPage = totalPages; }
-
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            
-            renderDocuments(filtered.slice(startIndex, endIndex));
-            renderPaginationControls(filtered);
-        }
-
-        function listenToDocuments() {
-            if (!documentsCollection) return;
-            onSnapshot(documentsCollection, (snapshot) => {
-                allDocuments = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-                allDocuments.sort((a, b) => (b.data.createdAt?.toMillis() || 0) - (a.data.createdAt?.toMillis() || 0));
-                
-                if (!loadingScreen.classList.contains('hidden')) {
-                    loadingScreen.style.opacity = '0';
-                    setTimeout(() => loadingScreen.classList.add('hidden'), 300);
-                }
-                updateView();
-            });
-        }
-        
-        document.getElementById('documents-list').addEventListener('click', async (e) => {
-            const card = e.target.closest('.card');
-            if (!card) return;
-            const docId = card.dataset.id;
-            const docRef = doc(db, documentsCollection.path, docId);
-
-            if (e.target.closest('.delete-doc-btn')) {
-                showConfirmationModal('Tem a certeza de que deseja apagar este item e todos os seus ficheiros e evidências?', async () => {
-                    try {
-                        const docData = (await getDoc(docRef)).data();
-                        const deletePromises = (docData.files || []).map(file => file.path && deleteObject(ref(storage, file.path)));
-                        (docData.pendencies || []).forEach(p => p.evidencePath && deletePromises.push(deleteObject(ref(storage, p.evidencePath))));
-                        
-                        await Promise.all(deletePromises.filter(Boolean));
-                        await deleteDoc(docRef);
-                        showToast('Item excluído com sucesso!', 'success');
-                    } catch (error) {
-                        console.error("Erro ao excluir item:", error);
-                        showToast(`Erro ao excluir: ${error.message}`, 'error');
-                    }
-                });
-            } else if (e.target.closest('.add-pendency-btn')) {
-                const btn = e.target.closest('.add-pendency-btn');
-                const input = btn.previousElementSibling;
-                const newText = input.value.trim();
-
-                if (newText) {
-                    btn.disabled = true;
-                    try {
-                        const docSnap = await getDoc(docRef);
-                        if (docSnap.exists()) {
-                            const pendencies = docSnap.data().pendencies || [];
-                            pendencies.push({ text: newText, status: 'pendente' });
-                            await updateDoc(docRef, { pendencies });
-                            input.value = '';
-                        }
-                    } catch (error) {
-                         showToast('Erro ao adicionar pendência.', 'error');
-                    } finally {
-                        btn.disabled = false;
-                    }
-                }
-            } else if (e.target.closest('.edit-pendency-btn')) {
-                const pendencyItem = e.target.closest('.pendency-item');
-                const pendencyIndex = e.target.closest('[data-pendency-index]').dataset.pendencyIndex;
-                const mainDiv = pendencyItem.querySelector('.flex.items-center.justify-between');
-                
-                const originalContent = mainDiv.innerHTML;
-                const labelText = mainDiv.querySelector('label').textContent;
-
-                mainDiv.innerHTML = `
-                    <div class="flex items-center gap-2 w-full">
-                        <input type="text" class="edit-pendency-input w-full px-2 py-1 border rounded-md dark:bg-gray-600 dark:border-gray-500" value="${labelText}">
-                        <button class="save-pendency-btn text-green-500 hover:text-green-600 px-2" data-pendency-index="${pendencyIndex}"><i class="fas fa-check"></i></button>
-                        <button class="delete-pendency-btn text-red-500 hover:text-red-600 px-2" data-pendency-index="${pendencyIndex}"><i class="fas fa-trash"></i></button>
-                        <button class="cancel-edit-btn text-gray-500 hover:text-gray-600 px-2"><i class="fas fa-times"></i></button>
-                    </div>
-                `;
-                mainDiv.querySelector('.cancel-edit-btn').onclick = () => { mainDiv.innerHTML = originalContent; };
-            } else if(e.target.closest('.save-pendency-btn')) {
-                const pendencyIndex = e.target.closest('[data-pendency-index]').dataset.pendencyIndex;
-                const input = e.target.closest('.flex').querySelector('.edit-pendency-input');
-                const newText = input.value.trim();
-                if (newText) {
-                    try {
-                        const docSnap = await getDoc(docRef);
-                        if(docSnap.exists()){
-                            const pendencies = docSnap.data().pendencies;
-                            pendencies[pendencyIndex].text = newText;
-                            await updateDoc(docRef, { pendencies });
-                            showToast('Pendência atualizada.', 'success');
-                        }
-                    } catch (error) {
-                        showToast('Erro ao salvar pendência.', 'error');
-                    }
-                }
-            } else if(e.target.closest('.delete-pendency-btn')) {
-                const pendencyIndex = e.target.closest('[data-pendency-index]').dataset.pendencyIndex;
-                showConfirmationModal('Tem certeza que deseja apagar esta pendência?', async () => {
-                     try {
-                        const docSnap = await getDoc(docRef);
-                        if(docSnap.exists()){
-                            const pendencies = docSnap.data().pendencies;
-                            const pendencyToRemove = pendencies.splice(pendencyIndex, 1)[0];
-                            if (pendencyToRemove && pendencyToRemove.evidencePath) {
-                                await deleteObject(ref(storage, pendencyToRemove.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
-                            }
-                            await updateDoc(docRef, { pendencies });
-                            showToast('Pendência apagada.', 'success');
-                        }
-                    } catch (error) {
-                        showToast('Erro ao apagar pendência.', 'error');
-                    }
-                });
-            }
-        });
-        
-        document.getElementById('documents-list').addEventListener('change', async (e) => {
-            const target = e.target;
-            const card = target.closest('.card');
-            if (!card) return;
-            const docId = card.dataset.id;
-            const docRef = doc(db, documentsCollection.path, docId);
-
-            if (target.classList.contains('pendency-checkbox')) {
-                const pendencyIndex = parseInt(target.dataset.pendencyIndex, 10);
-                const isChecked = target.checked;
-                const docSnap = await getDoc(docRef);
-                if (!docSnap.exists()) return;
-
-                const pendencies = docSnap.data().pendencies;
-                const currentPendency = pendencies[pendencyIndex];
-
-                if (!isChecked && currentPendency.evidenceUrl) {
-                    showConfirmationModal('Desmarcar esta pendência também removerá a evidência. Deseja continuar?', async () => {
-                        if (currentPendency.evidencePath) {
-                            await deleteObject(ref(storage, currentPendency.evidencePath)).catch(err => console.error("Erro ao apagar evidência", err));
-                        }
-                        const updatedPendency = { ...currentPendency, status: 'pendente' };
-                        delete updatedPendency.evidenceUrl;
-                        delete updatedPendency.evidencePath;
-                        pendencies[pendencyIndex] = updatedPendency;
-                        await updateDoc(docRef, { pendencies });
-                    });
-                    target.checked = true; // Reverte visualmente até confirmação
-                } else {
-                    pendencies[pendencyIndex].status = isChecked ? 'concluido' : 'pendente';
-                    await updateDoc(docRef, { pendencies });
-                }
-            }
-
-            if (target.classList.contains('evidence-upload-input')) {
-                const file = target.files[0];
-                if (!file) return;
-                const pendencyIndex = parseInt(target.dataset.pendencyIndex, 10);
-                const spinner = target.closest('.evidence-section').querySelector('.evidence-spinner');
-                
-                try {
-                    target.classList.add('hidden');
-                    spinner.classList.remove('hidden');
-                    const filePath = `evidence/${docId}/${Date.now()}_${file.name}`;
-                    const storageRef = ref(storage, filePath);
-                    const snapshot = await uploadBytes(storageRef, file);
-                    const downloadURL = await getDownloadURL(snapshot.ref);
-
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        const pendencies = docSnap.data().pendencies;
-                        pendencies[pendencyIndex].evidenceUrl = downloadURL;
-                        pendencies[pendencyIndex].evidencePath = filePath;
-                        await updateDoc(docRef, { pendencies });
-                        showToast('Evidência enviada!', 'success');
-                    }
-                } catch(error) {
-                    console.error("Erro ao enviar evidência:", error);
-                    showToast("Falha ao enviar evidência.", 'error');
-                    target.classList.remove('hidden');
-                } finally {
-                    spinner.classList.add('hidden');
-                }
-            }
-        });
-    </script>
 </body>
 </html>
-
